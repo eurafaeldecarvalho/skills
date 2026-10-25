@@ -4,7 +4,13 @@ A collection of Claude skills. Each skill lives in its own folder with a `SKILL.
 
 ## Skills
 
-Together these are the "impeccable + taste-skill, but for games":
+**Before you build** — the go / no-go gate that decides if a concept can spread at all:
+
+| Skill | What it does | Scope |
+|-------|--------------|-------|
+| [`concept-gate/`](concept-gate/) | Run **before a single line of product code**: scores a game/app concept against a fixed virality + buildability rubric, hard-fails ideas with no engine to spread (solo/idle loops, "it'll sell" with no reach answer, ideas the market already killed), checks it against the owner's real goal, and returns **GO / FIX-FIRST / SKIP**. Stops you polishing something nobody will share. | Game & app concepts |
+
+**Once you're building** — together these are the "impeccable + taste-skill, but for games":
 
 | Skill | What it does | Scope |
 |-------|--------------|-------|
