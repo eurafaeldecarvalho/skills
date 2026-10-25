@@ -1,23 +1,32 @@
 # skills
 
-Coleção de skills do Claude. Cada skill fica na sua própria pasta, com um `SKILL.md`.
+A collection of Claude skills. Each skill lives in its own folder with a `SKILL.md`.
 
 ## Skills
 
-| Skill | O que faz |
-|-------|-----------|
-| [`game-feel/`](game-feel/) | Game feel / "juice": a camada de feedback (easing, number-pop, screenshake, hit-stop, partículas, som, arte flat-minimalista) que faz um jogo parecer satisfatório e compartilhável. Um "impeccable, mas para jogos". |
+Together these are the "impeccable + taste-skill, but for games":
 
-## Instalar uma skill (Claude Code)
+| Skill | What it does | Scope |
+|-------|--------------|-------|
+| [`game-feel/`](game-feel/) | How the action **FEELS** — the feedback/juice layer (easing, number-pop, trauma-based screenshake, hit-stop, particles, sound). | Shared (2D & 3D) |
+| [`game-taste-2d/`](game-taste-2d/) | How a 2D game **LOOKS** — art direction (palette, value-based legibility, composition, mascot, camera/parallax, HUD/typography, anti-slop). The "taste-skill for games". | 2D |
+| [`game-polish/`](game-polish/) | The whole-build **audit/polish pass** (feel, art, readability, onboarding, performance, mobile, accessibility, audio, the shareable moment) → a prioritized fix list. The "impeccable for games". | Shared (2D & 3D) |
 
-Copie a pasta da skill para o seu diretório de skills:
+> `game-taste` is split by dimension because 2D and 3D art direction differ a lot. A `game-taste-3d`
+> counterpart covers 3D (lighting, materials, low-poly, shaders). `game-feel` and `game-polish` are
+> dimension-agnostic, so they have no suffix.
+
+## Install a skill (Claude Code)
+
+Copy the skill folder into your skills directory:
 
 ```bash
-# skill no nível do usuário
-cp -r game-feel ~/.claude/skills/game-feel
+# user-level skill
+cp -r game-taste-2d ~/.claude/skills/game-taste-2d
 ```
 
-Ou coloque a pasta dentro do `.claude/skills/` de um projeto. O Claude passa a consultá-la automaticamente quando o contexto bate com a `description` da skill.
+Or drop the folder into a project's `.claude/skills/`. Claude then consults it automatically whenever
+the context matches the skill's `description`.
 
-## Licença
-MIT — ver [LICENSE](LICENSE).
+## License
+MIT — see [LICENSE](LICENSE).
