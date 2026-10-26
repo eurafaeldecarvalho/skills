@@ -1,0 +1,28 @@
+nome,plataforma,tipo,endpoint,mercado,frequencia,cota_min,limite,termos_nota
+itunes_search,apple,loja,https://itunes.apple.com/search?term={termo}&entity=software&country={pais}&limit=50,todos,diaria,10,15 req/min; cache 24h,Apple public API
+itunes_lookup,apple,loja,https://itunes.apple.com/lookup?id={id}&country={pais},todos,diaria,0,15 req/min,use for competitor snapshots
+apple_rss_v2,apple,ranking,https://rss.marketingtools.apple.com/api/v2/{pais}/apps/{top-free|top-paid}/{50|100}/apps.json,todos,diaria,2,N<=100 (N>100 returns 500); isolated 502 = retry,BR and US daily; GB CA AU weekly
+apple_rss_grossing,apple,ranking,https://itunes.apple.com/{pais}/rss/topgrossingapplications/limit={<=200}/genre={id}/json,todos,diaria,2,may disappear without notice,only free revenue signal
+apple_reviews,apple,reviews,https://itunes.apple.com/{pais}/rss/customerreviews/page={1..10}/id={id}/sortBy=mostRecent/json,todos,diaria,20,max 10 pages; HTTP 400 on page 11 = end of feed,
+play_scraper,google_play,loja,npm google-play-scraper (lang=en country=us | lang=pt country=br),todos,diaria,10,1 req/2s,unofficial library; reinstall if missing
+wordpress_api,wordpress,marketplace,https://api.wordpress.org/plugins/info/1.2/?action=query_plugins&request[search]={termo},todos,diaria,10,use curl -g,
+wordpress_forum_rss,wordpress,reviews,https://wordpress.org/support/plugin/{slug}/feed/,todos,diaria,10,registered competitors only,unresolved topic = pedido
+hn_algolia,hn,comunidade,https://hn.algolia.com/api/v1/search_by_date?query={q}&tags=story&numericFilters=created_at_i%3E{cursor},EN,diaria,10,,queries: looking for a tool | alternative to | I would pay
+stackexchange,stackexchange,comunidade,https://api.stackexchange.com/2.3/search?intitle={q}&site={webapps|superuser|softwarerecs|wordpress},EN,diaria,10,no key: 300 req/day per IP; >30 req/s rejected,
+trustmrr,trustmrr,receita,https://trustmrr.com/startup-sitemap.xml,todos,semanal,20,1 req/3s; cursor = highest lastmod,hypothesis only; sample of those who earn
+trustmrr_stats,trustmrr,receita,https://trustmrr.com/stats,todos,semanal,1,1 req/3s,revenue distribution
+cws,cws,marketplace,https://chromewebstore.google.com/detail/{id},EN,semanal,10,1 req/3s; public pages only,
+shopify_apps,shopify,marketplace,https://apps.shopify.com/search?q={termo},EN,semanal,10,1 req/3s; public pages only,
+atlassian_marketplace,atlassian,marketplace,https://marketplace.atlassian.com/search?query={termo},EN,semanal,10,1 req/3s,
+workspace_marketplace,workspace,marketplace,https://workspace.google.com/marketplace/search/{termo},EN,semanal,10,1 req/3s,
+ptax_bcb,bcb,cambio,https://olinda.bcb.gov.br/olinda/servico/PTAX/versao/v1/odata/CotacaoDolarDia(dataCotacao=@dataCotacao)?@dataCotacao='{MM-DD-AAAA}'&$format=json,todos,diaria,1,weekends return value=[]; use the last business day,
+posthog,posthog,metricas,POST {host}/api/projects/{id}/query (HogQL),todos,diaria,0,2400/h on the query endpoint,experiments only
+cloudflare_pages,cloudflare,publicacao,Pages API with CF_PAGES_TOKEN (Pages:Edit),todos,manual,0,500 builds/month on free,
+search_console,google_search,metricas,API Search Console,todos,semanal,0,,verified landings only
+apple_ads_popularidade,dono,keyword,manual by the owner,EN,manual,0,,the routine never makes this up
+keyword_planner,dono,keyword,manual by the owner,todos,manual,0,,the routine never makes this up
+play_scraper_br,google_play,reviews,npm google-play-scraper (lang=pt country=br),BR,diaria,10,1 req/2s,reviews of paid BR apps
+stackoverflow_pt,stackexchange,comunidade,https://api.stackexchange.com/2.3/search?intitle={q}&site=pt.stackoverflow,BR,diaria,5,shares the 300/day stackexchange quota,queries (pt): ferramenta para | alternativa ao
+github_issues,github,comunidade,"https://api.github.com/search/issues?q=""{q}""+is:issue",todos,semanal,5,search without token: 10 req/min,read the API terms at bootstrap; queries: looking for a tool | would pay for
+dono_campo,dono_campo,manual,inbox/ (excerpts pasted by the owner from closed groups),todos,manual,0,max 10 excerpts/week; counts once per idea,url_status=0 (attested by the owner)
+web_publica,web,pagina,public URL opened with curl -L or browser (HTTP 200 in the run),todos,manual,0,1 req/3s; never G2/Capterra/Reddit without OAuth/X,pricing page of a competitor/substitute and public forum; counts as at most 1 platform

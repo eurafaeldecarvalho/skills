@@ -1,0 +1,20 @@
+etapa,metrica,segmento,tipo_criterio,limiar_passa,limiar_mata,n_min,eventos_min,prazo_dias,unidade_n,marco_inicio,sem_amostra_destino,mata_destino,versao,vigente_desde,origem,ancora
+E1,cta_click_rate,*,taxa,0.05,0.02,200,10,14,pageview,landing_no_ar,e1_inconclusiva,morta,1,2026-10-26,heuristica,"Unbounce 2024: SaaS median 3.8% (click or form)"
+E1,email_per_click,*,taxa,0.40,0.15,10,4,14,cta_click,landing_no_ar,e1_inconclusiva,morta,1,2026-10-26,heuristica,
+E2E3,pay_count,BR,contagem,2,0,150,2,14,pageview_preco,anuncio_aprovado,arquivada,arquivada,1,2026-10-26,heuristica,"n_min = min(150, reachable n in pageviews); owner decision 2026-10-26: 2 payments (1% conv passes ~44%, 0.3% ~7%)"
+E3,pay_count,*,contagem,3,0,300,3,30,pageview_preco,primeiro_pageview_preco,estender_depois_arquivada,morta,1,2026-10-26,heuristica,after extension (n=600 or +30 days) requires 5
+M1,installs_7d,*,contagem,15,14,4,15,28,semanas,listing_aprovado,arquivada,arquivada,1,2026-10-26,heuristica,events = installs in the last 7 days
+WSEO,impressoes_7d,*,contagem,100,99,6,100,49,semanas,paginas_publicadas,arquivada,arquivada,1,2026-10-26,heuristica,Search Console
+WSEO,cta_click_7d,*,contagem,3,2,13,3,98,semanas,paginas_publicadas,arquivada,arquivada,1,2026-10-26,heuristica,
+L1,installs_organicos,*,contagem,300,299,60,300,61,dias,publicado_na_loja,congelada,congelada,1,2026-10-26,heuristica,alternative: trial_start >= 30
+L1,trial_start,*,contagem,30,29,60,30,61,dias,publicado_na_loja,congelada,congelada,1,2026-10-26,heuristica,alternative to installs_organicos
+E4,install_to_trial,EN,taxa,0.05,0.025,300,10,60,install,mvp_lancado,congelada,morta,1,2026-10-26,benchmark,"RevenueCat SOSA 2026: download->trial NA median 7.1%"
+E4,install_to_trial,BR,taxa,0.03,0.015,300,10,60,install,mvp_lancado,congelada,morta,1,2026-10-26,benchmark,"RevenueCat SOSA 2026: other regions 3.0-3.7%"
+E4,install_to_trial,global_outros,taxa,0.03,0.015,300,10,60,install,mvp_lancado,congelada,morta,1,2026-10-26,benchmark,"RevenueCat SOSA 2026: other regions 3.0-3.7%"
+E4,trial_to_paid,EN,taxa,0.30,0.15,30,5,120,trial_start,mvp_lancado,congelada,morta,1,2026-10-26,benchmark,"RevenueCat SOSA 2026: trial->paid NA median 34.2%"
+E4,trial_to_paid,BR,taxa,0.20,0.10,30,5,120,trial_start,mvp_lancado,congelada,morta,1,2026-10-26,benchmark,RevenueCat SOSA 2026: LATAM+MEA+ROW ~20-23%
+E4,trial_to_paid,global_outros,taxa,0.20,0.10,30,5,120,trial_start,mvp_lancado,congelada,morta,1,2026-10-26,benchmark,RevenueCat SOSA 2026: LATAM+MEA+ROW ~20-23%
+E4,visit_to_trial,web,taxa,0.02,0.01,300,6,60,pageview,mvp_lancado,congelada,morta,1,2026-10-26,heuristica,
+E4,trial_to_paid,web,taxa,0.15,0.075,30,5,120,trial_start,mvp_lancado,congelada,morta,1,2026-10-26,heuristica,
+E4,install_to_trial,marketplace,taxa,0.02,0.01,300,6,60,install,mvp_lancado,congelada,morta,1,2026-10-26,heuristica,track M: n = marketplace installs (same threshold as web visit_to_trial)
+E3,pay_count,nativo,contagem,3,0,100,3,30,install,cobranca_ativa,estender_depois_arquivada,morta,1,2026-10-26,heuristica,native billing (Shopify/Atlassian): n = listing installs since billing went live; after extension requires 5

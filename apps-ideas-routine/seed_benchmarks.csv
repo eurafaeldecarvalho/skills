@@ -1,0 +1,67 @@
+metrica,segmento,valor,unidade,source_url,data_fonte,tipo_fonte,confianca,usar_em_calculo,nota,verificado_em
+receita_mensal_12m_p25,app_assinatura,16,USD/month,https://www.revenuecat.com/state-of-subscription-apps/,2026-03,primaria,alta,1,"MTR (monthly tracked revenue) 12 months after launch; sample only of apps that already earn",2026-10-26
+receita_mensal_12m_mediana,app_assinatura,72,USD/month,https://www.revenuecat.com/state-of-subscription-apps/,2026-03,primaria,alta,1,idem,2026-10-26
+receita_mensal_12m_p75,app_assinatura,429,USD/month,https://www.revenuecat.com/state-of-subscription-apps/,2026-03,primaria,alta,1,idem,2026-10-26
+receita_mensal_12m_p90,app_assinatura,2574,USD/month,https://www.revenuecat.com/state-of-subscription-apps/,2026-03,primaria,alta,1,idem,2026-10-26
+pct_chega_1k_em_2anos,app_assinatura,0.173,fraction,https://www.revenuecat.com/state-of-subscription-apps/,2026-03,primaria,alta,1,,2026-10-26
+pct_chega_10k_em_2anos,app_assinatura,0.046,fraction,https://www.revenuecat.com/state-of-subscription-apps/,2026-03,primaria,alta,1,,2026-10-26
+download_to_paid_d35,hard_paywall,0.107,fraction,https://www.revenuecat.com/state-of-subscription-apps/,2026-03,primaria,alta,1,"top quartile >20%",2026-10-26
+download_to_paid_d35,freemium,0.021,fraction,https://www.revenuecat.com/state-of-subscription-apps/,2026-03,primaria,alta,1,"top quartile >4.5%",2026-10-26
+rpi_d60,hard_paywall,3.09,USD,https://www.revenuecat.com/state-of-subscription-apps/,2026-03,primaria,alta,1,,2026-10-26
+rpi_d60,freemium,0.38,USD,https://www.revenuecat.com/state-of-subscription-apps/,2026-03,primaria,alta,1,,2026-10-26
+trial_to_paid,trial_ate_4d,0.255,fraction,https://www.revenuecat.com/state-of-subscription-apps/,2026-03,primaria,alta,1,,2026-10-26
+trial_to_paid,trial_5a9d,0.374,fraction,https://www.revenuecat.com/state-of-subscription-apps/,2026-03,primaria,alta,1,,2026-10-26
+trial_to_paid,trial_17a32d,0.425,fraction,https://www.revenuecat.com/state-of-subscription-apps/,2026-03,primaria,alta,1,,2026-10-26
+trial_to_paid,america_do_norte,0.342,fraction,https://www.revenuecat.com/state-of-subscription-apps/,2026-03,primaria,alta,1,user's region,2026-10-26
+trial_to_paid,latam_mea_row,0.215,fraction,https://www.revenuecat.com/state-of-subscription-apps/,2026-03,primaria,media,1,"20-23% grouped range; not a LATAM-only number",2026-10-26
+download_to_trial,america_do_norte,0.071,fraction,https://www.revenuecat.com/state-of-subscription-apps/,2026-03,primaria,alta,1,,2026-10-26
+download_to_trial,demais_regioes,0.033,fraction,https://www.revenuecat.com/state-of-subscription-apps/,2026-03,primaria,media,1,"3.0-3.7% range (IN/SEA, LATAM, MEA, ROW together)",2026-10-26
+download_to_paid,ios,0.026,fraction,https://ppc.land/ai-apps-earn-41-more-per-user-but-churn-30-faster-revenuecat-finds/,2026-03-14,secundaria,media,1,"citing RevenueCat 2026; not found on the primary page",2026-10-26
+download_to_paid,android,0.009,fraction,https://ppc.land/ai-apps-earn-41-more-per-user-but-churn-30-faster-revenuecat-finds/,2026-03-14,secundaria,media,1,idem,2026-10-26
+receita_por_pagante_ia_vs_nao,app_ia,1.41,multiplier,https://www.revenuecat.com/state-of-subscription-apps/,2026-03,primaria,alta,1,"41% more revenue per payer",2026-10-26
+churn_ia_vs_nao,app_ia,1.30,multiplier,https://www.revenuecat.com/state-of-subscription-apps/,2026-03,primaria,alta,1,"churn 30% faster",2026-10-26
+preco_semanal_mediana,mobile,7.48,USD,https://www.adapty.io/state-of-in-app-subscriptions/,2026,primaria,media,1,"RevenueCat 2026 gives 5.99",2026-10-26
+preco_mensal_mediana,mobile,12.99,USD,https://www.adapty.io/state-of-in-app-subscriptions/,2026,primaria,media,1,,2026-10-26
+preco_anual_mediana,mobile,38.42,USD,https://www.adapty.io/state-of-in-app-subscriptions/,2026,primaria,media,1,"RevenueCat 2026 gives 34.80",2026-10-26
+pct_startups_receita_0_1k,trustmrr_listadas,0.677,fraction,https://trustmrr.com/stats,2026-10-26,primaria,media,0,"listed startups only (selection of those who earn and disclose); do not use as a median",2026-10-26
+retencao_clientes_12m_q_superior,arpa_lt10,0.631,fraction,https://chartmogul.com/reports/saas-retention-report/,2023-11-01,primaria,media,0,"2022 data; TOP quartile",2026-10-26
+retencao_clientes_12m_q_superior,arpa_gt500,0.857,fraction,https://chartmogul.com/reports/saas-retention-report/,2023-11-01,primaria,media,0,idem,2026-10-26
+grr_anual,ia_nativo_lt50,0.23,fraction,https://chartmogul.com/reports/saas-retention-the-ai-churn-wave/,2025-12-10,primaria,baixa,0,"~200 companies; the author calls it directional",2026-10-26
+conversao_landing_mediana,geral,0.066,fraction,https://unbounce.com/conversion-benchmark-report/,2024,primaria,media,0,"click or form",2026-10-26
+conversao_landing_mediana,saas,0.038,fraction,https://unbounce.com/conversion-benchmark-report/saas-conversion-rate/,2024,primaria,media,0,,2026-10-26
+conversao_landing_mediana,saas_facebook,0.035,fraction,https://unbounce.com/conversion-benchmark-report/saas-conversion-rate/,2024,primaria,media,0,,2026-10-26
+pct_buscas_com_ai_overview,google_eua,0.18,fraction,https://www.pewresearch.org/short-reads/2025/07/22/google-users-are-less-likely-to-click-on-links-when-an-ai-summary-appears-in-the-results/,2025-07-22,primaria,alta,1,"900 US adults; Mar 2025",2026-10-26
+ctr_link_com_ai_overview,google_eua,0.08,fraction,https://www.pewresearch.org/short-reads/2025/07/22/google-users-are-less-likely-to-click-on-links-when-an-ai-summary-appears-in-the-results/,2025-07-22,primaria,alta,1,"without summary: 15%",2026-10-26
+pct_paginas_sem_trafego,google,0.9655,fraction,https://ahrefs.com/blog/search-traffic-study/,2023-12-01,primaria,media,0,,2026-10-26
+pct_envios_rejeitados,app_store_2025,0.23,fraction,https://www.apple.com/legal/app-store/transparency/2025/,2026,primaria,alta,1,"2,093,244 of 9,100,620 submissions; Performance ~65% of rejections, Design ~20% (own calculation)",2026-10-26
+cpc_meta_mediana,BR,0.20,USD,https://www.superads.ai/facebook-ads-costs/cpc-cost-per-click/brazil,2025-07/2026-07,secundaria,baixa,1,"average of monthly medians",2026-10-26
+cpc_meta_mediana,US,1.18,USD,https://www.superads.ai/facebook-ads-costs/cpc-cost-per-click/united-states,2025-07/2026-07,secundaria,baixa,1,,2026-10-26
+cpc_meta_mediana,GB,1.18,USD,https://www.superads.ai/facebook-ads-costs/cpc-cost-per-click/united-kingdom,2025-07/2026-07,secundaria,baixa,1,"page shows pounds; likely USD",2026-10-26
+cpc_meta_mediana,CA,0.90,USD,https://www.superads.ai/facebook-ads-costs/cpc-cost-per-click/canada,2025-07/2026-07,secundaria,baixa,1,"page uses $ without saying CAD or USD",2026-10-26
+cpc_meta_mediana,AU,0.95,USD,https://www.superads.ai/facebook-ads-costs/cpc-cost-per-click/australia,2025-07/2026-07,secundaria,baixa,1,"page uses $ without saying AUD or USD",2026-10-26
+cpc_meta_mediana,IN,0.10,USD,https://www.superads.ai/facebook-ads-costs/cpc-cost-per-click/india,2025-07/2026-07,secundaria,baixa,0,"does not count as evidence of USD payment",2026-10-26
+cpc_meta_mediana,PH,0.075,USD,https://www.superads.ai/facebook-ads-costs/cpc-cost-per-click/philippines,2025-07/2026-07,secundaria,baixa,0,idem,2026-10-26
+cpc_google_search_media,US,5.42,USD,https://localiq.com/blog/search-advertising-benchmarks/,2026-06-01,secundaria,media,1,"Business Services 5.87",2026-10-26
+cpc_linkedin_media,global,5.98,EUR,https://dreamdata.io/blog/announcing-linkedin-ads-benchmarks-report-2026,2026-03-10,secundaria,baixa,1,,2026-10-26
+apple_ads_cpt_mediana,US,1.91,USD,https://www.apptweak.com/en/aso-blog/apple-ads-benchmarks,2025,secundaria,media,1,Search Results,2026-10-26
+apple_ads_cpi_mediana,US,4.06,USD,https://www.apptweak.com/en/aso-blog/apple-ads-benchmarks,2025,secundaria,media,1,Search Results,2026-10-26
+apple_ads_cpi_mediana,GB,2.60,USD,https://www.apptweak.com/en/aso-blog/apple-ads-benchmarks,2025,secundaria,media,1,,2026-10-26
+apple_ads_cpi_mediana,CA,2.24,USD,https://www.apptweak.com/en/aso-blog/apple-ads-benchmarks,2025,secundaria,media,1,,2026-10-26
+apple_ads_cpi_mediana,AU,2.19,USD,https://www.apptweak.com/en/aso-blog/apple-ads-benchmarks,2025,secundaria,media,1,,2026-10-26
+apple_ads_cpi_mediana,BR,1.05,USD,https://www.apptweak.com/en/aso-blog/apple-ads-benchmarks,2025,secundaria,media,1,,2026-10-26
+taxa_appstore,sbp,0.15,fraction,https://developer.apple.com/app-store/small-business-program/,2026-10-26,primaria,alta,1,"on tax-exclusive price; 10% only under the EU alternative terms",2026-10-26
+taxa_play_assinatura,todos,0.15,fraction,https://support.google.com/googleplay/android-developer/answer/112622,2026-10-26,primaria,alta,1,"US/UK/EEA/AU/JP = 10% service + 5% billing",2026-10-26
+taxa_shopify_rev_share,primeiro_1M_vitalicio,0,fraction,https://shopify.dev/docs/apps/launch/distribution/revenue-share,2026-10-26,primaria,alta,1,"15% above; Shopify billing required",2026-10-26
+taxa_creem,transacao,0.039,fraction,https://docs.creem.io/merchant-of-record/finance/payouts.md,2026-10-26,primaria,alta,1,"+ US$0.40; no international surcharge; payouts on the 1st and 15th, minimum US$50, fee max(US$7;1%)",2026-10-26
+taxa_dodo,transacao,0.04,fraction,https://dodopayments.com/pricing,2026-10-26,primaria,alta,1,"+ US$0.40; +1.5% international; +0.5% subscription; SWIFT US$25",2026-10-26
+taxa_paddle,transacao,0.05,fraction,https://www.paddle.com/pricing,2026-10-26,primaria,alta,1,"+ US$0.50; monthly payout, minimum US$100, wire US$15",2026-10-26
+taxa_stripe_br,cartao_nacional,0.0399,fraction,https://stripe.com/br/pricing,2026-10-26,primaria,alta,1,"+ R$0.39; +2% international card; Billing +0.7%; Pix 1.19% invite-only",2026-10-26
+revenuecat_gratis_ate,mtr,2500,USD/month,https://www.revenuecat.com/pricing/,2026-10-26,primaria,alta,1,"above: 1% of MTR",2026-10-26
+pct_revisoes_em_48h,app_store,0.90,fraction,https://developer.apple.com/distribute/app-review/,2026-10-26,primaria,alta,1,"typically; 50% in <24h",2026-10-26
+custo_conta,apple_developer,99,USD/year,https://developer.apple.com/programs/enroll/,2026-10-26,primaria,alta,1,may vary by region,2026-10-26
+custo_conta,google_play,25,USD one-time,https://support.google.com/googleplay/android-developer/answer/6112435,2026-10-26,primaria,alta,1,,2026-10-26
+custo_conta,chrome_web_store,5,USD one-time,https://blog.chromium.org/2020/03/new-developer-dashboard-and.html,2020-03,primaria,media,1,value from the 2020 official blog,2026-10-26
+custo_conta,shopify_partner,19,USD one-time,https://shopify.dev/docs/apps/launch/distribution/revenue-share,2026-10-26,primaria,alta,1,,2026-10-26
+taxa_atlassian_forge,primeiro_1M_vitalicio,0,fraction,https://developer.atlassian.com/market/faqs/pricing-payment-billing,2026-10-26,primaria,alta,1,"0% up to US$1M lifetime Forge revenue (since 2026-01-01); 17% after (partner gets 83% since 2026-10-01); Connect 25%",2026-10-26
+play_testers_conta_pessoal,teste_fechado,12,testers for 14 days,https://support.google.com/googleplay/android-developer/answer/14151465,2026-10-26,primaria,alta,1,"personal accounts created after 2023-11-13",2026-10-26
+ctr_link_sem_ai_overview,google_eua,0.15,fraction,https://www.pewresearch.org/short-reads/2025/07/22/google-users-are-less-likely-to-click-on-links-when-an-ai-summary-appears-in-the-results/,2025-07-22,primaria,alta,1,"searches without AI summary",2026-10-26
