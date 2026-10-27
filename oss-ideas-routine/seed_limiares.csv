@@ -1,0 +1,4 @@
+etapa,metrica,tipo_criterio,limiar_passa,limiar_mata,n_min,eventos_min,prazo_dias,mata_destino,versao,vigente_desde,origem,ancora
+S1,e14,contagem,10,2,14,0,14,arquivada,1,2026-10-27,heuristica,"pass: only 5.2% of starred 2025 repos reach 10 [bench:p_ge10_dado_ge1/github_2025]; kill below 3 after 2 channels is a heuristic"
+S2,e30,contagem,100,29,30,0,30,morta,1,2026-10-27,benchmark,"pass >=100 in 30 d ~ P90 of repos with >=10 (12.5% reach 100) [bench:p_ge100_dado_ge10/github_2025]; 59-74% of a launched repo's stars arrive in 30 d [bench:pct_estrelas_em_30d_pos_hn/hn_posts_2025-11_2026-07]; kill <30 heuristic"
+S3,e90,contagem,1000,299,90,0,90,arquivada,1,2026-10-27,benchmark,"12.1% of repos past 100 reach 1k [bench:p_ge1000_dado_ge100/github_2025]; below 300 the repo is kept but no longer invested in"

@@ -1,0 +1,64 @@
+metrica,segmento,valor,unidade,source_url,data_fonte,tipo_fonte,confianca,nota,verificado_em
+repos_criados_total,github_2025,58239941,repos,https://api.github.com/search/repositories?q=created:2025-01-01..2025-12-31,2026-10-27,medicao_propria,alta,non-fork; RT re-mediu 58239559 (deleções); usar_em_calculo=0,2026-10-27
+repos_ge_10_estrelas,github_2025,211259,repos,https://api.github.com/search/repositories?q=created:2025-01-01..2025-12-31+stars:>=10,2026-10-27,medicao_propria,alta,resposta incomplete sem token deu 92097 (descartar),2026-10-27
+repos_ge_100_estrelas,github_2025,26500,repos,https://api.github.com/search/repositories?q=created:2025-01-01..2025-12-31+stars:>=100,2026-10-27,medicao_propria,alta,"0,0455% do total [RT✓]",2026-10-27
+repos_ge_1000_estrelas,github_2025,3219,repos,https://api.github.com/search/repositories?q=created:2025-01-01..2025-12-31+stars:>=1000,2026-10-27,medicao_propria,alta,incomplete sem token deu 803 [RT✓],2026-10-27
+repos_ge_10000_estrelas,github_2025,319,repos,https://api.github.com/search/repositories?q=created:2025-01-01..2025-12-31+stars:>=10000,2026-10-27,medicao_propria,alta,[RT✓],2026-10-27
+p_ge10_dado_ge1,github_2025,0.052,fracao,https://api.github.com/search/repositories,2026-10-27,medicao_propria,alta,211259/4079617; âncora do S1,2026-10-27
+p_ge100_dado_ge10,github_2025,0.125,fracao,https://api.github.com/search/repositories,2026-10-27,medicao_propria,alta,26500/211259; âncora do S2,2026-10-27
+p_ge1000_dado_ge100,github_2025,0.121,fracao,https://api.github.com/search/repositories,2026-10-27,medicao_propria,alta,3219/26500; âncora do S3,2026-10-27
+repos_ge_100_estrelas,github_ult90d,7187,repos,https://api.github.com/search/repositories?q=created:2026-07-29..2026-10-27+stars:>=100,2026-10-27,medicao_propria,alta,recalibrar mensal,2026-10-27
+repos_ge_1000_estrelas,github_ult90d,707,repos,https://api.github.com/search/repositories?q=created:2026-07-29..2026-10-27+stars:>=1000,2026-10-27,medicao_propria,alta,"RT: 1ª tentativa 584 incomplete, depois 707 false [RT✓]",2026-10-27
+repos_ge_100_estrelas,github_ult7d,266,repos,https://api.github.com/search/repositories?q=created:>2026-10-20+stars:>=100,2026-10-27,medicao_propria,alta,"de ~2,2M criados; ~0,012% [RT✓]",2026-10-27
+trending_geral_diario_min,github_trending,608,estrelas/dia,https://github.com/trending?since=daily,2026-10-27,medicao_propria,media,snapshot único; mediana 1197 (não 1211) [RT✓],2026-10-27
+trending_geral_semanal_min,github_trending,823,estrelas/semana,https://github.com/trending?since=weekly,2026-10-27,medicao_propria,media,snapshot único; mediana 2838,2026-10-27
+trending_lang_diario_min_python,github_trending_python,41,estrelas/dia,https://github.com/trending/python?since=daily,2026-10-27,medicao_propria,media,TS 12; Rust 27; Go 0; 10º de Go = 31,2026-10-27
+showhn_github_pontos_mediana,hn_12m,2,pontos,https://hn.algolia.com/api/v1/search_by_date?tags=show_hn&query=github.com&restrictSearchableAttributes=url,2026-10-27,medicao_propria,alta,n=17076 [RT✓ 17082],2026-10-27
+showhn_github_pct_ge10,hn_12m,0.0889,fracao,https://hn.algolia.com/api/v1/search_by_date?tags=show_hn,2026-10-27,medicao_propria,alta,1518/17076 [RT✓],2026-10-27
+showhn_github_pct_ge50,hn_12m,0.0346,fracao,https://hn.algolia.com/api/v1/search_by_date?tags=show_hn,2026-10-27,medicao_propria,alta,591/17076,2026-10-27
+showhn_github_pct_ge100,hn_12m,0.0179,fracao,https://hn.algolia.com/api/v1/search_by_date?tags=show_hn,2026-10-27,medicao_propria,alta,"305/17076 [RT✓ 306]; 90d: 1,36%; set/26 só-github: 0,9%",2026-10-27
+showhn_todos_pct_ge100,hn_2026,0.013,fracao,https://hn.algolia.com/api/v1/search_by_date?tags=show_hn,2026-10-27,medicao_propria,alta,"3 janelas de 5d em 2026: 1,2-1,4%; 2024: 3,9%",2026-10-27
+showhn_volume_5d_jun,hn_2026,703,posts,https://hn.algolia.com/api/v1/search_by_date?tags=show_hn,2026-06-15,medicao_propria,alta,"2024: 256 (2,7×) [RT✓ 700 vs 255]",2026-10-27
+showhn_titulo_ia_pct_ge100,hn_12m,0.0131,fracao,https://hn.algolia.com/api/v1/search_by_date?tags=show_hn,2026-10-27,medicao_propria,alta,"n=7258 (42,5%); não-IA 2,14% n=9818",2026-10-27
+showhn_built_with_claude_pct_ge100,hn_6m,0.038,fracao,https://hn.algolia.com/api/v1/search?tags=show_hn&query=built%20with%20claude,2026-10-27,medicao_propria,media,"n=626; viés de seleção; vibe coded n=275 -> 1,8%",2026-10-27
+estrelas_7d_mediana_hn_10_49pts,hn_posts_2025-11_2026-07,32,estrelas,https://api.github.com/repos/{o}/{r}/stargazers/history,2026-10-27,medicao_propria,alta,n=39 aleatória,2026-10-27
+estrelas_7d_mediana_hn_50_99pts,hn_posts_2025-11_2026-07,127,estrelas,https://api.github.com/repos/{o}/{r}/stargazers/history,2026-10-27,medicao_propria,alta,n=39,2026-10-27
+estrelas_7d_mediana_hn_100_199pts,hn_posts_2025-11_2026-07,303,estrelas,https://api.github.com/repos/{o}/{r}/stargazers/history,2026-10-27,medicao_propria,alta,n=39,2026-10-27
+estrelas_7d_mediana_hn_200plus,hn_posts_2025-11_2026-07,755,estrelas,https://api.github.com/repos/{o}/{r}/stargazers/history,2026-10-27,medicao_propria,alta,n=40,2026-10-27
+estrelas_por_ponto_hn_7d,hn_posts_2025-11_2026-07,2,estrelas/ponto,https://api.github.com/repos/{o}/{r}/stargazers/history,2026-10-27,medicao_propria,alta,"faixa 1,5-2,7; correlação não causal",2026-10-27
+pct_estrelas_em_30d_pos_hn,hn_posts_2025-11_2026-07,0.59,fracao,https://api.github.com/repos/{o}/{r}/stargazers/history,2026-10-27,medicao_propria,alta,59% (10-49 pts) a 74% (100-199),2026-10-27
+estrelas_atuais_showhn_gt300pts_mediana,hn_12m,2528,estrelas,https://hn.algolia.com/api/v1/search?tags=show_hn&numericFilters=points%3E300,2026-10-27,medicao_propria,alta,n=51; p25 823; 15/51 < 1000,2026-10-27
+hn_post_sucesso_estrelas_3d_mediana,hn_borges2019,138,estrelas,https://arxiv.org/abs/1908.04219,2019,primaria,alta,vs 74 nos 3d antes; post >=132 upvotes [RT✓],2026-10-27
+hn_top1_ctr_post_para_repo,dotenvx,0.17,fracao,https://dotenvx.com/blog/2024/06/30/what-does-number-one-on-hacker-news-get-you.html,2024-06-30,primaria,media,n=1; 350 pts [RT✓],2026-10-27
+conv_visita_repo_estrela,dotenvx,0.13,fracao,https://dotenvx.com/blog/2024/06/30/what-does-number-one-on-hacker-news-get-you.html,2024-06-30,primaria,media,n=1; 800/6000 em 48h [RT✓],2026-10-27
+pct_estrelas_4sem_mediana,top5000_2018,0.07,fracao,https://arxiv.org/abs/1811.07643,2018,primaria,alta,"P25 0,4% P75 21,6% [RT✓]",2026-10-27
+pct_estrelas_4sem_mediana,repos_gt2000_abr-jul26,0.28,fracao,https://api.github.com/repos/{o}/{r}/stargazers/history,2026-10-27,medicao_propria,media,n=50; sem filtro anti-fake,2026-10-27
+semanas_ate_pico_mediana,repos_gt2000_abr-jul26,3,semanas,https://api.github.com/repos/{o}/{r}/stargazers/history,2026-10-27,medicao_propria,media,"pico->50% em 1 semana; ritmo atual 13,4% do pico",2026-10-27
+pct_repos_crescimento_viral,top5000_2018,0.023,fracao,https://arxiv.org/abs/1811.07643,2018,primaria,alta,"slow 58,2 moderate 30,0 fast 9,3 [RT✓]",2026-10-27
+pct_virais_por_promocao_hn,top5000_2018,0.727,fracao,https://arxiv.org/abs/1811.07643,2018,primaria,alta,16/22 [RT✓],2026-10-27
+pct_devs_olham_estrelas,survey_791,0.73,fracao,https://arxiv.org/abs/1811.07643,2018,primaria,alta,567/777 [RT✓],2026-10-27
+ganho_semana_pos_major_mediana,top5000_2018,1.49,razao,https://arxiv.org/abs/1811.07643,2018,primaria,alta,"75% ganham <=3,8% do total nessas semanas [RT✓]",2026-10-27
+hit_rate_gt1000_cli_rust_12m,topic_cli_rust,0.00355,fracao,https://api.github.com/search/repositories?q=topic:cli+language:rust+created:>2025-10-27+stars:>1000,2026-10-27,medicao_propria,alta,37/10425 (incomplete_results=false; o 3274 anterior era contagem incompleta),2026-10-27
+hit_rate_gt1000_cli_go_12m,topic_cli_go,0.00166,fracao,https://api.github.com/search/repositories?q=topic:cli+language:go+created:>2025-10-27+stars:>1000,2026-10-27,medicao_propria,alta,18/10821 (incomplete_results=false),2026-10-27
+hit_rate_gt1000_cli_12m,topic_cli,0.00191,fracao,https://api.github.com/search/repositories?q=topic:cli+created:>2025-10-27+stars:>1000,2026-10-27,medicao_propria,alta,169/88406 (incomplete_results=false),2026-10-27
+hit_rate_gt1000_awesome_12m,topic_awesome,0.0093,fracao,https://api.github.com/search/repositories?q=topic:awesome+created:>2025-10-27+stars:>1000,2026-10-27,medicao_propria,alta,37/3998; meia-vida curtíssima,2026-10-27
+hit_rate_gt1000_agent_skills_12m,topic_agent_skills,0.0061,fracao,https://api.github.com/search/repositories?q=topic:agent-skills+created:>2025-10-27+stars:>1000,2026-10-27,medicao_propria,alta,229/37449 [RT✓],2026-10-27
+hit_rate_gt1000_claude_code_12m,topic_claude_code,0.0052,fracao,https://api.github.com/search/repositories?q=topic:claude-code+created:>2025-10-27+stars:>1000,2026-10-27,medicao_propria,alta,525/100477,2026-10-27
+hit_rate_gt1000_self_hosted_12m,topic_self_hosted,0.0032,fracao,https://api.github.com/search/repositories?q=topic:self-hosted+created:>2025-10-27+stars:>1000,2026-10-27,medicao_propria,alta,135/41976,2026-10-27
+hit_rate_gt1000_mcp_server_12m,topic_mcp_server,0.0024,fracao,https://api.github.com/search/repositories?q=topic:mcp-server+created:>2025-10-27+stars:>1000,2026-10-27,medicao_propria,alta,83/34399,2026-10-27
+hit_rate_gt1000_system_prompts_12m,topic_system_prompts,0.008,fracao,https://api.github.com/search/repositories?q=topic:system-prompts+created:>2025-10-27+stars:>1000,2026-10-27,medicao_propria,alta,[RT✎] 2/251 (não 0/251); Piebald-AI 13013,2026-10-27
+hit_rate_gt1000_build_your_own_name_12m,name_build_your_own,0.0007,fracao,https://api.github.com/search/repositories?q=build-your-own+in:name+created:>2025-10-27+stars:>1000,2026-10-27,medicao_propria,alta,1/1373 [RT✓],2026-10-27
+share_skills_em_repos_gt2000,repos_gt2000_12m,0.43,fracao,https://api.github.com/search/repositories?q=stars:>2000+created:>2025-10-27,2026-10-27,medicao_propria,media,908/2115; mensal 53% jan-fev/26 -> 32% set/26,2026-10-27
+fork_star_mediana,repos_gt2000_12m,0.097,razao,https://api.github.com/search/repositories,2026-10-27,medicao_propria,alta,"p10 0,041; 49/2115 < 0,01",2026-10-27
+starscout_estrelas_falsas,github_2019_2024,3810000,estrelas,https://arxiv.org/html/2412.13459v2,2025-09-06,primaria,alta,"[RT✎ v2] 18617 repos, 301k contas",2026-10-27
+starscout_pct_repos_deletados,github_2019_2024,0.9042,fracao,https://arxiv.org/html/2412.13459v2,2025-09-06,primaria,alta,"[RT✎ v2] baseline 5,03%; contas 57,07% (baseline 3,54%)",2026-10-27
+starscout_pico_prevalencia,github_jul2024,0.1666,fracao,https://arxiv.org/html/2412.13459v2,2025-09-06,primaria,alta,[RT✎ v2] 3499 repos populares em jul/2024,2026-10-27
+starscout_efeito_promocional_dias,github,60,dias,https://arxiv.org/html/2412.13459v2,2025-09-06,primaria,alta,"+0,07% curto prazo; -0,04% do 3º mês em diante [RT✎]",2026-10-27
+estrela_falsa_preco_1000,mercado,64,usd,https://dagster.io/blog/fake-stars,2023,secundaria,media,"heurística de conta falsa: <=1 seguidor, <=4 repos",2026-10-27
+issues_prs_por_1k_estrelas_vida,github_virais,22,itens/1k_estrelas,https://api.github.com/search/issues,2026-10-27,medicao_propria,alta,"n=11; 7,7 (screenshot-to-code) a 66 (lazygit)",2026-10-27
+itens_semana_pico_90d,github_virais,28,itens/semana,https://api.github.com/search/issues?q=repo:mckaywrigley/chatbot-ui+type:pr,2026-10-27,medicao_propria,media,chatbot-ui 371 PRs/90d; screenshot-to-code ~17/sem,2026-10-27
+issues_abertas_por_1k_estrelas,github_virais,5.5,itens/1k_estrelas,https://api.github.com/search/issues,2026-10-27,medicao_propria,media,"faixa 0,5-10,4; p75~6",2026-10-27
+sponsors_por_1k_estrelas,github_virais,1,sponsors/1k_estrelas,https://api.github.com/graphql,2026-10-27,medicao_propria,alta,abi 0 @80k; jesseduffield 159 [RT✓]; só contexto,2026-10-27
+share_licenca_mit,repos_gt1000_desde_2025,0.42,fracao,https://api.github.com/search/repositories?q=created:>2025-01-01+stars:>1000+license:mit,2026-10-27,medicao_propria,alta,"Apache 20%; AGPL 5,6%; n=6738 [RT✓]",2026-10-27
+hn_comentarios_ai_slop,hn_2026_ate_27out,6671,comentarios,https://hn.algolia.com/api/v1/search?tags=comment&query=%22AI%20slop%22,2026-10-27,medicao_propria,alta,2024: 246; 2025: 2166 [RT✓],2026-10-27
+traffic_retencao,github,14,dias,https://docs.github.com/en/repositories/viewing-activity-and-data-for-your-repository/viewing-traffic-to-a-repository,2026-10-27,primaria,alta,snapshot diário obrigatório [RT✓],2026-10-27
