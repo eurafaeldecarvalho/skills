@@ -10,11 +10,12 @@ A collection of Claude skills. Each skill lives in its own folder with a `SKILL.
 |-------|--------------|-------|
 | [`concept-gate/`](concept-gate/) | Run **before a single line of product code**: scores a game/app concept against a fixed virality + buildability rubric, hard-fails ideas with no engine to spread (solo/idle loops, "it'll sell" with no reach answer, ideas the market already killed), checks it against the owner's real goal, and returns **GO / FIX-FIRST / SKIP**. Stops you polishing something nobody will share. | Game & app concepts |
 
-**Finding what to build** — a recurring agent that hunts and validates paid app ideas before you build:
+**Finding what to build** — recurring agents that hunt and validate ideas before you build:
 
 | Skill | What it does | Scope |
 |-------|--------------|-------|
 | [`apps-ideas-routine/`](apps-ideas-routine/) | A **daily autonomous routine** (Grok Bot, Claude scheduled tasks or any agent with a persistent workspace) that starts from **who already pays and complains**, keeps all state in **SQLite with database-enforced guards**, validates without talking to users (public data → fake-door landing → paid test → real checkout → paywalled MVP) and only then proposes building. Ships with schema, queries, a tested calc lib and 66 sourced benchmarks. | Web & mobile apps |
+| [`games-ideas-routine/`](games-ideas-routine/) | A **daily autonomous routine** for small games (web portals like Poki/CrazyGames, Steam, mobile, Roblox/UEFN) that starts from **loops already proven** (platform arbitrage, genre cohorts, jams) plus a structural twist, keeps all state in **SQLite with database-enforced guards**, validates by **measured player behavior** (portal playtests → Steam page/demo → paid tests only when they buy a real sample), picks the engine per idea and aims at a portfolio in net R$/hour, not MRR. Ships with schema, queries, a tested calc lib, 65 sourced benchmarks and a 352-test suite. | Games |
 
 **Once you're building** — together these are the "impeccable + taste-skill, but for games":
 
