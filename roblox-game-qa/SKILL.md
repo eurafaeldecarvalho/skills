@@ -1,16 +1,15 @@
 ---
 name: roblox-game-qa
 description: >-
-  A step-by-step QA and refinement pass for Roblox experiences built with Rojo/Luau and Roblox Studio
-  (optionally driven through Studio's built-in MCP server). Use it BEFORE publishing or updating a Roblox
-  experience, AFTER a playtest or a batch of tester reports, and whenever the user wants to refine, polish,
-  harden or "cover every possible problem" in a Roblox game. It runs ordered passes (context, audit,
-  play critique, harden, adapt, polish, publish, feedback loop) over build reproducibility, every device
-  and input type (phone, tablet, desktop, console/TV; touch, keyboard/mouse, gamepad), world interaction
-  (ProximityPrompts, camera, movement), game flow, multiplayer/server authority, visuals/audio,
-  performance, safety/compliance and publishing, scores each dimension 0-4, ranks findings P0-P3 and ends
-  with a release gate that requires real-device and real-player verification. Composes `game-polish`,
-  `game-feel` and `game-taste-3d` for the look-and-feel layer.
+  QA and refinement pass for Roblox experiences built with Rojo/Luau and Roblox Studio (optionally driven via
+  Studio's MCP server). Use it BEFORE publishing or updating an experience, AFTER a playtest or tester reports,
+  and whenever the user wants to refine, polish, harden or "cover every possible problem" in a Roblox game.
+  Step 0 books the shared machine (schedule, RAM pre-flight, coordination with other agents). Then ordered
+  passes (audit, play critique, harden, red-team, adapt, polish, feedback loop) over build, every device and
+  input, world interaction, flow, multiplayer, visuals/audio, measured performance, safety, publishing,
+  accessibility and localization, repeated in a convergence loop until two clean iterations, then a FINAL
+  PASS on the published build. Ships scripts (verify chain, Studio MCP harness, UI audit, Output scan, RAM
+  pre-flight) and templates; scores 0-4, ranks P0-P3, ends with a release gate needing real devices and players.
 ---
 
 # Roblox game QA (the "impeccable" pass for Roblox experiences)
@@ -24,9 +23,11 @@ Roblox (devices, inputs, prompts, replication, publishing rules, safety) and the
 **Honest scope.** This checklist maximizes coverage; it cannot guarantee a bug-free game. Emulators
 lie about touch, notches, memory and frame rate, and testers find things no checklist predicts. That is
 why the pass ends with a **release gate** that requires a real device of each failing class and real
-players, and why every tester report becomes a regression test. Always say what produced the evidence
-(static check, unit test, Studio play-test, Device Emulator, real device, real players) and what stayed
-untested.
+players, and why every tester report becomes a regression test. **Evidence-source rule:** every claim, score and
+finding names what produced it — static check, Lune unit test, Lune fake server, Studio MCP play, Clients and
+Servers, Device Emulator, real device, real players — and the config (build sha, place version, viewport, input,
+players, language). A score is capped by its weakest source: nothing reaches 4 on emulator evidence alone.
+What could not be checked is listed as **Untested** / **Blocked**, never silently passed.
 
 Method credit: the pass structure (separate audit / critique / harden / adapt / polish passes,
 0-4 dimension scores, P0-P3 severity, anti-pattern catalogs, "a detector result is evidence, not proof",
@@ -43,47 +44,91 @@ copied; the Roblox content is original.
 - **Studio's built-in MCP server**, when connected: use it to run Luau in edit/play mode, start/stop
   play-tests, read Output and inspect the DataModel. Without it, hand the owner an exact play-test script.
 - A real phone (and ideally a tablet, a console or a TV-size screen) and at least 2 real testers.
+- When the machine is shared with other agents: the shared schedule `box-reserve.sh` (+ `box-schedule.md`,
+  `locks/`) and this skill's `box-preflight.sh`, both in the shared folder. See
+  [reference/shared-box.md](reference/shared-box.md).
+
+## Scripts and templates (copy into the game repo's `qa/`, adjust the config block, keep them in git)
+| File | Use |
+|---|---|
+| [scripts/verify.sh](scripts/verify.sh) | Pass 1 headless chain (compile, rojo, luau-lsp, selene, stylua, flags, Lune × N for flakes) |
+| [scripts/studio-mcp.py](scripts/studio-mcp.py) | Drive Studio's MCP server: edit-mode Luau, play-mode server script, inject/remove a client probe |
+| [scripts/ui-audit.client.luau](scripts/ui-audit.client.luau) + [scripts/qa-collect.server.luau](scripts/qa-collect.server.luau) | Measure the live GUI (insets, off-screen, real text px, targets, thumb zones, overlaps, blockers, modals) |
+| [scripts/output-scan.py](scripts/output-scan.py) | Classify Output/F9/MCP logs into P0-P2 findings; gate on P0/P1 |
+| [scripts/box-preflight.sh](scripts/box-preflight.sh) | Shared-machine RAM/process pre-flight + memory watchdog for your own job |
+| [templates/GAME-QA.md](templates/GAME-QA.md) | Pass 0 context: targets, numeric budgets, machine constraints, evidence sources |
+| [templates/FEATURES.md](templates/FEATURES.md) | Inventory of every action/screen with oracle, edges, failure and red-team rows; ⏳ must reach 0 |
+| [templates/report-template.md](templates/report-template.md) | Scores, iteration ledger, findings with config + evidence, red-team, FINAL PASS, gate, Untested/Blocked |
+| [templates/bug-template.md](templates/bug-template.md) · [templates/manual-checks.md](templates/manual-checks.md) | Tester reports; regression checks no script covers yet |
+
+The Luau probes and the MCP client were validated against a stub MCP server and the compiler; check them once
+on your Studio (and its MCP tool names) before trusting a clean result.
 
 ## How to run the pass (order matters)
 
 | # | Pass | Goal | Output |
 |---|------|------|--------|
-| 0 | **Context** | Write/refresh `GAME.md` at the repo root: genre, core loop, target devices, solo/multiplayer, server size, session length, audience/age, place & universe *names* (no secrets), known-unfinished areas. | `GAME.md` |
-| 1 | **Audit** (code + build) | Everything measurable without playing: build, static checks, tests, debug flags, remotes, data, assets, performance budgets. | scored findings |
+| 0 | **Machine + context** | **Mandatory pre-flight** before anything heavy (below). Then write/refresh `qa/GAME-QA.md` (template): genre, core loop, target devices/inputs, players, languages, numeric budgets, machine constraints, place *names* (no secrets). | booked slot, `GAME-QA.md` |
+| 1 | **Audit** (code + build) | `scripts/verify.sh`; build `FEATURES.md` from the code (remotes, prompts, buttons, states); debug flags, data, assets, budgets. | scored findings, `FEATURES.md` |
 | 2 | **Critique** (play) | Play the real build like a first-time player on each device class; judge clarity, flow, pacing, fun, feel. | scored findings |
-| 3 | **Harden** | Attack edge cases: join/leave mid-round, 1 vs N players, lag, spam, exploits, empty/long text, streaming, teleports, data loss. | findings + fixes |
-| 4 | **Adapt** | Make every screen and action work on every device and input type. | findings + fixes |
+| 3 | **Harden** | Edge cases: join/leave mid-round, 1 vs N players, lag, empty/long text, streaming, teleports, data loss — on the Lune fake server first, then in play. | findings + fixes |
+| 3b | **Red-team** | Hostile client: wrong types, spam, out-of-state, ownership, distance, size, join/leave storms, data, forged teleport data, economy, seeded monkey ([reference/red-team.md](reference/red-team.md)). New seeds every iteration. | findings + seeds |
+| 4 | **Adapt** | Every screen × viewport × input × language: layout math sweep, `ui-audit` probe, operator screenshots; accessibility and localization. | matrix + fixes |
+| ↺ | **Converge** | Repeat passes 1–4 (whole, plus every earlier regression check) until **2 consecutive iterations with zero P0–P2**, fresh seeds in the second ([reference/convergence-loop.md](reference/convergence-loop.md)). | iteration ledger |
 | 5 | **Polish** | Refinement, not redesign: visuals, audio, juice, copy, consistency (→ `game-polish`, `game-feel`, `game-taste-3d`). | fixes |
-| 6 | **Gate + publish** | Run the release gate, publish to the existing place, verify on a real device after publish. | gate report |
+| 6 | **FINAL PASS + gate** | Clean-commit build, publish (owner-approved) to the existing place with private/playtest access, real-server Output/F9, update-over-previous-version data check, real phone + 2 real players, rollback noted ([reference/final-pass.md](reference/final-pass.md)). Then the release gate. | FINAL PASS table, gate |
 | 7 | **Feedback loop** | Turn every tester report into a reproducible bug → fix → regression test → re-verify on the failing device. | bug log |
+
+### Step 0 — shared-machine pre-flight (mandatory, every session that opens Studio, extra clients, emulators or long soaks)
+Several agents may share one box with limited RAM and often no swap. Before any heavy step
+([reference/shared-box.md](reference/shared-box.md) has the commands):
+1. **Read the schedule** (`box-reserve.sh status`): live locks, booked slots and recurring windows of other agents.
+2. **Check the machine** (`box-preflight.sh check -r studio[,studio-client]`): `free -m`, heavy processes of
+   everyone (Studio, emulators, Gradle…), RAM estimate for your plan. Budget: Studio ≈ 2.5 GB per process (edit
+   session and each Play client), an emulator ≈ 4 GB, and **≥ 2 GB must stay free**. NO-GO → don't start.
+3. **Book a slot** in the shared schedule with your project and resource, then take the lock inside it. Respect
+   other agents' bookings and recurring windows; on overlap or doubt, **message the affected agents first**
+   (agent-to-agent, or via the owner). Urgent overrides: notify first, then book with `--force` and a note.
+4. **During:** run the memory watchdog on your own pid; if free RAM drops below the headroom, stop **your**
+   job. Kill only your own processes; never close or kill another agent's windows. One Studio window per agent;
+   the Studio MCP bridge is a single port per box — if it's taken, coordinate.
+5. **After:** close your Studio/clients, release the lock (marks the slot done), log the slot and RAM peak.
+6. **No slot / not enough RAM:** the affected items are **Blocked** (never counted as passed); do the headless work,
+   rebook, and list them under Untested.
 
 Rules for running it:
 - **Run Audit and Critique independently.** If you can spawn sub-agents, give each one a separate
   context so the code audit does not bias the play critique (and vice versa); merge only afterwards.
 - **See it running.** Static reading cannot judge touch targets, prompt overlap, darkness or pacing.
-- **Fix in severity order, one change at a time**, re-test after each; never one giant "QA fixes" commit.
+- **Fix in severity order, one change at a time**: failing regression check first, then the fix, one finding per
+  commit with its ID; never one giant "QA fixes" commit. A fix is verified by the next full iteration, not by itself.
+- **Prefer headless evidence, then confirm live.** Lune pure tests and the fake server run anywhere in seconds;
+  a Studio slot is scarce on a shared box — spend it on what only Studio can show.
 - **Narrow targets beat whole-game glances.** "Critique the shift-end screen on a small phone" finds more than "review the game".
 - **Polish preserves.** If the core loop is not fun, say so and stop polishing; send it back to concept validation / redesign.
 - Read [reference/anti-patterns.md](reference/anti-patterns.md) before the first fix; it lists the Roblox mistakes no linter catches.
 
 ## Severity (blocker → polish)
-- **P0 Blocker** — cannot play, progress, or ship: crash/error loop, stuck screen, lost data, exploit that
-  breaks the economy, action impossible on a device class, safety/compliance violation. Fix now; blocks publish.
-- **P1 Major** — a large share of players will struggle or quit: unclear goal, unreachable/overlapped
-  prompt on touch, unreadable text on phone, broken mid-round join, frame drops on mobile. Fix before publish.
-- **P2 Minor** — annoyance with a workaround: wrong hint glyph, small layout clipping, a loud sound. Next pass.
-- **P3 Polish** — small finish details: extra juice, transition timing, copy tone. If time permits; keep the list short.
+| Sev | Meaning | Roblox examples |
+|---|---|---|
+| **P0 Blocker** | cannot play, progress or ship; fix now, blocks publish | server error loop on join; overlay that only leaves on tap and blocks the round; data lost on leave/shutdown; a remote that grants currency/score without validation (any successful red-team attack); action impossible on touch or gamepad; unfiltered user text shown to others; debug flag on in the publish build |
+| **P1 Major** | many players struggle or quit; fix before publish (or owner accepts in writing) | prompt hidden behind another on touch; core text < 12 px on a small phone; late joiner stuck in lobby; instance count grows every round; asset not permitted (silent for players); infinite yield in Output; no visual cue for a sound-only danger |
+| **P2 Minor** | annoyance with a workaround; fixed inside the loop (the loop exits only at zero P2) | `E` hint shown on touch; label clipped in one language; deprecated `wait()`; a loud sound; button slightly under the jump zone on one preset |
+| **P3 Polish** | finish details; tracked, doesn't keep the loop alive | transition timing, extra juice, copy tone, emoji in a title |
 
 Not everything is P0. A list of 40 P1s is a failed triage.
 
 ## Dimension scores (0-4)
 Score each dimension at the end of passes 1-4: **0** broken · **1** major gaps · **2** works with rough
 edges · **3** good, minor issues · **4** excellent, verified on real devices. The release gate needs
-**≥3 everywhere and 4 on "Devices & UI" and "Input parity" for every target device class**.
+**≥3 everywhere and 4 on the mandatory four — Devices & UI, Input parity, Multiplayer & server, Safety &
+compliance — for every target device class**. A 4 needs live evidence (real device / real players for Devices,
+Input and Multiplayer); headless-only evidence caps at 3.
 
 Dimensions: 1 Build & reproducibility · 2 Devices & UI · 3 Input parity · 4 World interaction ·
 5 Game flow & onboarding · 6 Multiplayer & server · 7 Visual & audio · 8 Performance · 9 Safety &
-compliance · 10 Publishing · 11 Feedback loop.
+compliance · 10 Publishing · 11 Feedback loop · 12 Accessibility & localization
+([reference/accessibility.md](reference/accessibility.md), [reference/localization.md](reference/localization.md)).
 
 ---
 
@@ -93,12 +138,13 @@ compliance · 10 Publishing · 11 Feedback loop.
 - [ ] Clean checkout builds: `rojo build default.project.json -o build.rbxl` succeeds, no unmapped/duplicate paths.
 - [ ] `luau-lsp analyze` (or Script Analysis), `selene`, `stylua --check` are clean; new modules use `--!strict` where feasible.
 - [ ] Lune unit tests pass for every pure module (rules, scoring, economy, timers, difficulty).
-- [ ] Studio Output is clean on server **and** client start: no errors, no warnings spam, no "asset not found / failed to load".
+- [ ] `scripts/verify.sh` green with `FLAKE=3` (a test red once in 3 runs is a finding).
+- [ ] Studio Output is clean on server **and** client start (`output-scan.py` on the log): no errors, no warnings spam, no "asset not found / failed to load".
 - [ ] **Debug flags reset:** every `DEBUG`, `SKIP_TUTORIAL`, `FAST_TIMERS`, `GOD_MODE`, test currency, admin allow-list, `print` spam is off/removed in the publish build (grep for them; ideally one `Config` module with a test that asserts release values).
 - [ ] The place in Studio matches git (no Studio-only edits that Rojo will overwrite, or that never reached git).
 
 ### 2. Devices & UI → [reference/devices-and-ui.md](reference/devices-and-ui.md)
-- [ ] Device Emulator pass on: small phone landscape, large phone landscape, tablet, 1080p desktop, ultrawide, console/TV (10-foot). Portrait too if `ScreenOrientation` allows it.
+- [ ] Screen × viewport matrix filled (layout-math sweep, `ui-audit` probe, operator screenshots), every cell with its source. Device Emulator pass on: small phone landscape, large phone landscape, tablet, 1080p desktop, ultrawide, console/TV (10-foot). Portrait too if `ScreenOrientation` allows it.
 - [ ] Layout uses Scale + `UIAspectRatioConstraint` / `UISizeConstraint`, or one `UIScale` driven by viewport; no giant Offset-only panels.
 - [ ] Safe area: `ScreenGui.ScreenInsets` = `CoreUISafeInsets` (or `DeviceSafeInsets` for full-bleed backgrounds only); nothing important under the notch, the Roblox top bar, or rounded corners.
 - [ ] Nothing interactive sits on the mobile thumbstick (bottom-left) or jump button (bottom-right) zones.
@@ -135,7 +181,8 @@ compliance · 10 Publishing · 11 Feedback loop.
 ### 6. Multiplayer & server → [reference/flow-and-multiplayer.md](reference/flow-and-multiplayer.md)
 - [ ] Server authority: the client requests, the server decides (score, currency, inventory, damage, timers).
 - [ ] Every `RemoteEvent`/`RemoteFunction` validates type, range, ownership, distance and state, and is rate-limited per player; no `InvokeClient` the server waits on.
-- [ ] Join mid-round, leave mid-round, rejoin, last player leaves, the player who pressed start leaves — all tested in *Clients and Servers* with 1, 2 and max players.
+- [ ] Join mid-round, leave mid-round, rejoin, last player leaves, the player who pressed start leaves — all on the Lune fake server with 1, 2 and max players, and confirmed in *Clients and Servers* as far as the machine allows (Blocked beyond that).
+- [ ] Red-team rows R01–R12 pass with this iteration's seeds ([reference/red-team.md](reference/red-team.md)).
 - [ ] Data: DataStore with retries, `UpdateAsync`, session locking, `BindToClose` save, no data loss on shutdown or teleport.
 - [ ] `StreamingEnabled` behavior: clients use `WaitForChild` / `ModelStreamingMode` for models they need; nothing assumes the whole map is present.
 - [ ] Teleports: failures handled (`TeleportInitFailed`), teleport data treated as untrusted.
@@ -154,6 +201,7 @@ compliance · 10 Publishing · 11 Feedback loop.
 - [ ] Part/instance counts reasonable; unions/meshes with sensible `CollisionFidelity`; `CanCollide`/`CanTouch`/`CanQuery` off where unused; anchored statics.
 - [ ] Streaming configured for large maps; no per-frame `Instance.new`/destroy churn; no unbounded loops or leaked connections across rounds.
 - [ ] Script activity in Developer Console and MicroProfiler checked during peak load, server and client.
+- [ ] Numbers recorded: instance count at lobby / after round 1 / after round 3 (flat), memory per side, remotes/s at peak; real fps only from a real device (a no-GPU box gives none).
 
 ### 9. Safety & compliance → [reference/safety-and-publishing.md](reference/safety-and-publishing.md)
 - [ ] Every user-written text shown to others (names, signs, pets, messages) is filtered with `TextService` before display; filter failures hide the text.
@@ -173,44 +221,52 @@ compliance · 10 Publishing · 11 Feedback loop.
 - [ ] Fix → regression test (Lune unit test, or a scripted Studio/MCP check, or a named manual check) → re-verify on the device type that failed.
 - [ ] The anti-pattern catalog gets a new line when a bug class is new.
 
+### 12. Accessibility & localization → [reference/accessibility.md](reference/accessibility.md), [reference/localization.md](reference/localization.md)
+- [ ] No meaning by color alone or sound alone; no fast full-screen flashing; reduced-motion respected; generous timing on holds.
+- [ ] Every visible string comes from one table; every key exists in every shipped language (test); no concatenated sentences.
+- [ ] Locale × viewport sweep (longest strings, pseudo-locale) clean on the smallest phone.
+
 ---
 
 ## Release gate (definition of done)
 Ship only when all are true; otherwise report what is missing.
-- [ ] Zero open P0; every P1 fixed or explicitly accepted by the owner in writing.
-- [ ] All dimension scores ≥3; Devices & UI and Input parity = 4 for every target device class.
+- [ ] Zero open P0 and zero open P1 (a P1 may stay only if the owner accepts it in writing, with its ID, in the report — the agent never accepts its own).
+- [ ] Convergence loop exited: 2 consecutive full iterations with zero P0–P2, the second with fresh red-team seeds; no severity lowered and no check removed to get there.
+- [ ] FEATURES.md has no ⏳; every Blocked item is listed with its reason and counts as not passed.
+- [ ] All dimension scores ≥3; the mandatory four (Devices & UI, Input parity, Multiplayer, Safety) = 4 for every target device class.
 - [ ] Build from clean checkout + static checks + Lune tests green; debug flags in release state.
 - [ ] Full loop played 3× in *Clients and Servers* with 1 and N players, Output clean.
 - [ ] Played on at least one **real phone** (and every other target device class you can get), not just the emulator.
 - [ ] At least 2 **real players** who did not build it completed the loop without help; their reports logged.
 - [ ] Safety checks (filtering, no unapproved spending) pass; publish target confirmed as the existing place.
-- [ ] Post-publish smoke test on a real device done.
+- [ ] FINAL PASS done on the published build (clean commit, place version recorded, real-server Output/F9 clean, previous-version data loads, rollback version noted).
+- [ ] Shared-machine slot released; no leftover processes of yours.
 
 ## Report formats
 
+Use [templates/report-template.md](templates/report-template.md) for the whole report (scores, iteration ledger,
+findings, red-team, FINAL PASS, gate, Untested/Blocked).
+
 **Finding (passes 1-5):**
 ```
-P1 — [Devices & UI] Countdown overlay never dismisses on touch
-  Evidence: Device Emulator iPhone SE landscape + real Android phone; Studio play, 1 player.
+P1 — [Devices & UI] Countdown overlay never dismisses on touch          (F-07, found iter 1)
+  Config: build 3f2a1c0 · local place · iPhone SE landscape preset · touch · 1 player · pt-BR
+  Evidence source: Device Emulator (operator screenshot) + real Android phone.
   Repro: start shift → countdown 3-2-1 → overlay stays until tapped.
   Why it matters: blocks the first seconds of every round on mobile.
   Fix: hide on countdown end (server state change), keep tap-to-skip as an extra.
   Verify: regression check in tests/ + replay on real phone.
 ```
 
-**Tester report → bug (pass 7):**
-```
-ID: BUG-012          Severity: P0/P1/P2/P3        Status: new / repro / fixed / verified
-Reporter + date:     Device + OS + input:  (e.g. Android phone, touch, landscape)
-Build/place version: Players in server:
-Steps:  1. … 2. … 3. …
-Expected:            Actual:
-Frequency: always / sometimes (x of y) / once     Output/F9 errors: (paste)
-Screenshot/video:    Regression test: (file or manual check name)
-```
+**Tester report → bug (pass 7):** [templates/bug-template.md](templates/bug-template.md) (device, OS, input,
+graphics quality, language, players, place version, steps, expected/actual, frequency, F9 errors).
 
-**End of pass:** dimension scores table, counts by severity, the top 3 fixes, the gate checklist with
-✅/❌, and an explicit **"Untested:"** line (devices, inputs, player counts or flows you could not check).
+**End of each iteration:** a ledger row (P0–P3, fixed, new, regressions, Blocked, clean streak). **End of the
+run:** dimension scores, the gate with ✅/❌/Blocked, the top 3 next steps, and an explicit **"Untested:"** line
+(devices, inputs, player counts, languages or flows you could not check, and why).
+
+A worked example of this skill on a real game (and the bugs that shaped these rules):
+[reference/case-turno.md](reference/case-turno.md).
 
 ## Anti-patterns of the QA itself
 - Declaring "works on mobile" from the Device Emulator alone.
@@ -220,3 +276,6 @@ Screenshot/video:    Regression test: (file or manual check name)
 - Polishing visuals while a P0/P1 remains.
 - Publishing with debug flags on, or to a new duplicate place.
 - Claiming the game is "100% bug-free". Report scores, evidence and what stayed untested instead.
+- Starting Studio or extra clients on a shared machine without the pre-flight and a booked slot, or touching
+  another agent's processes or windows.
+- Counting Blocked checks as passed; lowering a severity, skipping a test or shrinking the matrix to exit the loop.

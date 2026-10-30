@@ -13,6 +13,22 @@ Goal: every screen is readable and usable on every target device, and nothing ev
 Studio's Device Emulator checks layout; it does **not** prove touch feel, performance or real safe areas.
 Confirm on hardware (see release gate).
 
+## The matrix (every iteration, never shrunk)
+Rows = every reachable screen/state from FEATURES.md (loading, lobby, waiting, countdown, round, results,
+settings, shop, disconnected…). Columns = viewport preset × input × language (localization.md) × player count
+where it changes the UI. Three ways to fill a cell, cheapest first:
+1. **Pure layout math (headless).** If UI positions/scale come from a pure module (one `UIScale` from the viewport,
+   computed rects), a Lune test can sweep every screen × every viewport and assert: inside the safe area, no overlap,
+   text ≥ floor in real px, targets ≥ 44 px, nothing in the thumbstick/jump zones. Seconds, no Studio.
+2. **ui-audit probe in a play session** ([`scripts/ui-audit.client.luau`](../scripts/ui-audit.client.luau) via
+   `studio-mcp.py run-pair`, inside a booked slot): measures the real GUI tree at the current viewport and input,
+   per screen. It reports real px after scale, so a 9.9 px label can't hide behind "looks fine".
+3. **Operator screenshots.** The Device Emulator preset switch is a Studio UI action the agent may not be able to
+   drive; give the operator a numbered script (preset → screen → screenshot name) and audit the screenshots.
+A cell is ✅ only with its evidence source in the report; a cell nobody could check is **Blocked**, not ✅.
+A ui-audit hit is evidence, not proof: confirm on the screenshot before fixing, and fix the detector (with a test)
+when it is wrong.
+
 ## Layout rules
 - Size with **Scale**, keep shape with `UIAspectRatioConstraint`, cap with `UISizeConstraint`; or design at
   one reference resolution and drive a single `UIScale` from `workspace.CurrentCamera.ViewportSize`.
@@ -26,7 +42,7 @@ Confirm on hardware (see release gate).
 
 ## Readability
 - Touch targets ≥ 44×44 px on the smallest phone, with spacing so a thumb doesn't hit two.
-- Body text ≥ ~14 px after scaling; use `UITextSizeConstraint` (`MinTextSize`) when using `TextScaled`.
+- Body text ≥ ~14 px after scaling on phones (12 px is an absolute floor; set the number in GAME-QA.md); use `UITextSizeConstraint` (`MinTextSize`) when using `TextScaled`.
 - Contrast: light text gets a `UIStroke` or a backing panel over 3D scenes.
 - Emoji and rare glyphs may render differently or as boxes per platform/font: use ImageLabels for
   anything that carries meaning; test the rest on a real device.

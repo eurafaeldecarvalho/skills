@@ -47,3 +47,14 @@ as you find new bug classes.
 - Debug flags/cheats left on; test currency in the live economy.
 - Publishing a duplicate place instead of updating the existing one.
 - Spending Robux or buying assets without the owner's approval.
+
+## Accessibility & localization
+- Game state shown by color alone, or a danger cue that is only a sound.
+- Sentences built by concatenation; UI tested only with the source language's short strings.
+
+## The QA process itself (shared machine, loop)
+- Opening Studio + extra clients without booking the machine or checking free RAM; closing another agent's window.
+- Treating a check that couldn't run (no slot, no device, no people) as passed instead of Blocked.
+- Ending after one pass because the fixes "obviously" work; re-running only the fixed items.
+- Smoke-testing a cloud place that doesn't contain the latest commits.
+- Reporting frame rate measured on a box without a GPU.

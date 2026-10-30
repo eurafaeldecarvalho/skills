@@ -22,7 +22,20 @@
   louder than the music; 3D sounds have sensible roll-off.
 - Music loops cleanly; nothing loud plays on join.
 
-## Performance budgets (set real numbers in GAME.md)
+## Performance numbers (measure; adjectives don't count)
+A box without a GPU (Studio under Wine/software rendering) gives **no real fps** — never report its frame rate as
+a result. What it does give, reliably:
+| Number | How | Pass when |
+|---|---|---|
+| Instance count per round | server/client probe: `#game:GetDescendants()` and `#workspace:GetDescendants()` at lobby, after round 1 and after round 3 | back to baseline ± budget (else: leak, P1) |
+| Connections / tables growing | count your own registries per round (players, timers, effects) in the fake server | flat across rounds |
+| Memory | `Stats:GetTotalMemoryUsageMb()` and `Stats:GetMemoryUsageMbForTag(...)` on server and client in a play session; F9 ▸ Memory on device | under the GAME-QA.md budget, flat across rounds |
+| Script cost | MicroProfiler dump / F9 ▸ Scripts during the busiest moment | no script > a few % per frame |
+| Network | F9 ▸ Network: remote calls per second per player at peak | matches the design; no per-frame remotes |
+| Real fps | weakest target phone, busiest moment, operator reads the in-game Performance Stats (Settings) or F9 | ≥ budget (Blocked until a person runs it) |
+Write the numbers in the report with the source (fake server / Studio play / device).
+
+## Performance budgets (set real numbers in GAME-QA.md)
 - Test on the weakest target phone during the busiest moment (full server, most effects).
 - Developer Console (F9): Memory (client and server), Script performance, Network.
 - MicroProfiler: look for long frames, heavy scripts, physics spikes, render costs.

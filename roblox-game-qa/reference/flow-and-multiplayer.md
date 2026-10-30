@@ -22,7 +22,7 @@
 
 ## Difficulty curve
 - Simulate with Lune using the real rule modules (see build-and-tests.md), then confirm with real
-  players. Record target bands in `GAME.md` (e.g., level 1 win rate 90%+, level 5 ~60%).
+  players. Record target bands in `GAME.md` / `qa/GAME-QA.md` (e.g., level 1 win rate 90%+, level 5 ~60%).
 - Tune separately for solo and full servers (more players = more hands; scale orders/enemies by player count).
 
 ## Server authority & remotes
