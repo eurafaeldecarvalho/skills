@@ -1,0 +1,33 @@
+[
+[
+"get_studio_state",
+{}
+],
+{
+"luau": "mt_ins.luau",
+"dm": "Edit",
+"sub": {
+"__N__": "2",
+"__ARG__": "dois"
+}
+},
+{
+"luau": "mt_poll.luau",
+"dm": "Edit",
+"until": "FIM ",
+"every": 10,
+"max": 420
+},
+[
+"get_console_output",
+{}
+],
+{
+"luau": "mt_rem.luau",
+"dm": "Edit"
+},
+[
+"get_studio_state",
+{}
+]
+]

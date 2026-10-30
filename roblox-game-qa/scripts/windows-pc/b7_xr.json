@@ -1,0 +1,65 @@
+[
+[
+"get_studio_state",
+{}
+],
+[
+"start_stop_play",
+{
+"is_start": true
+},
+60
+],
+{
+"sleep": 14
+},
+{
+"luau": "ui_direct.luau",
+"dm": "Client"
+},
+{
+"luau": "cli_perf.luau",
+"dm": "Client"
+},
+[
+"screen_capture",
+{
+"capture_id": "XR_lobby"
+}
+],
+{
+"sleep": 28
+},
+{
+"luau": "ui_direct.luau",
+"dm": "Client"
+},
+{
+"luau": "cli_perf.luau",
+"dm": "Client"
+},
+[
+"screen_capture",
+{
+"capture_id": "XR_t1"
+}
+],
+[
+"get_console_output",
+{}
+],
+[
+"start_stop_play",
+{
+"is_start": false
+},
+60
+],
+{
+"sleep": 5
+},
+[
+"get_studio_state",
+{}
+]
+]

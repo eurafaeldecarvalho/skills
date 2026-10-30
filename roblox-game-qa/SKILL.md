@@ -54,6 +54,7 @@ copied; the Roblox content is original.
 | [scripts/verify.sh](scripts/verify.sh) | Pass 1 headless chain (compile, rojo, luau-lsp, selene, stylua, flags, Lune × N for flakes) |
 | [scripts/studio-mcp.py](scripts/studio-mcp.py) | Drive Studio's MCP server: edit-mode Luau, play-mode server script, inject/remove a client probe |
 | [scripts/ui-audit.client.luau](scripts/ui-audit.client.luau) + [scripts/qa-collect.server.luau](scripts/qa-collect.server.luau) | Measure the live GUI (insets, off-screen, real text px, targets, thumb zones, overlaps, blockers, modals) |
+| [scripts/windows-pc/](scripts/windows-pc/) | Rafael's Windows PC: Server & Clients harness (mt_ins/multi_srv/multi_cli/mt_poll/mt_rem), probes, batches, win.py ([reference/windows-pc.md](reference/windows-pc.md)) |
 | [scripts/output-scan.py](scripts/output-scan.py) | Classify Output/F9/MCP logs into P0-P2 findings; gate on P0/P1 |
 | [scripts/box-preflight.sh](scripts/box-preflight.sh) | Shared-machine RAM/process pre-flight + memory watchdog for your own job |
 | [templates/GAME-QA.md](templates/GAME-QA.md) | Pass 0 context: targets, numeric budgets, machine constraints, evidence sources |
@@ -61,7 +62,8 @@ copied; the Roblox content is original.
 | [templates/report-template.md](templates/report-template.md) | Scores, iteration ledger, findings with config + evidence, red-team, FINAL PASS, gate, Untested/Blocked |
 | [templates/bug-template.md](templates/bug-template.md) · [templates/manual-checks.md](templates/manual-checks.md) | Tester reports; regression checks no script covers yet |
 
-The Luau probes and the MCP client were validated against a stub MCP server and the compiler; check them once
+The Luau probes and the MCP client were validated against a stub MCP server and the compiler, and on 2026-10-30 against
+Studio 0.745's built-in StudioMCP.exe on a Windows PC (solo, Server & Clients with 2–3 clients, Device Simulator); check them once
 on your Studio (and its MCP tool names) before trusting a clean result.
 
 ## How to run the pass (order matters)
@@ -95,6 +97,17 @@ Several agents may share one box with limited RAM and often no swap. Before any 
 5. **After:** close your Studio/clients, release the lock (marks the slot done), log the slot and RAM peak.
 6. **No slot / not enough RAM:** the affected items are **Blocked** (never counted as passed); do the headless work,
    rebook, and list them under Untested.
+
+### Running on Rafael's Windows PC (mandatory rules)
+When the QA runs on Rafael's Windows PC (DESKTOP-UEOVLLP), follow [reference/windows-pc.md](reference/windows-pc.md):
+- **A REAL multiplayer test is MANDATORY:** *Server & Clients* with **2+ clients** (3 when the game has spectators or a
+  queue), driven by MCP with the `scripts/windows-pc/` pattern (`mt_ins` → `multi_srv`/`multi_cli` → `mt_poll` → `mt_rem`):
+  the core action through the real remotes, state equal on every client, red-team from the unprivileged client, one
+  player leaving mid-round. A QA on the PC without it is incomplete.
+- Local Rojo-built place only, in your own test Studio under `C:\Users\Rafael\turno-qa\`; never the live place, never
+  publish. Leave Rafael's own Studio/Player windows alone; close only your test Studio (check PID + title).
+- Use Studio's **built-in StudioMCP.exe** (status-bar "MCP" toggle) with `studio-mcp.py --studio <file>.rbxlx batch`.
+- Batch every PC command (each one needs approval); `CopyToBox` only after the producing command finished.
 
 Rules for running it:
 - **Run Audit and Critique independently.** If you can spawn sub-agents, give each one a separate
