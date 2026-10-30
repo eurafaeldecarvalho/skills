@@ -1,0 +1,8 @@
+# In-app language switch by testID. Input: LANG (e.g. pt-BR). Used by matrix-sweep.sh (MAESTRO_LANG_FLOW).
+appId: ${APP_ID}
+---
+- launchApp: { appId: "${APP_ID}" }
+- tapOn: { id: "tab-settings" }
+- tapOn: { id: "settings-language" }
+- tapOn: { id: "language-option-${LANG}" }
+- assertVisible: { id: "settings-root" }

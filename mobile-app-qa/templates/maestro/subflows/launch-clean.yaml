@@ -1,0 +1,11 @@
+appId: ${APP_ID}
+---
+- launchApp:
+    appId: ${APP_ID}
+    clearState: true
+    permissions:
+      all: deny
+- extendedWaitUntil:
+    visible:
+      id: "screen-root"          # add testID="screen-root" to the first screen
+    timeout: 20000

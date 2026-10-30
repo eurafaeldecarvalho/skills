@@ -1,0 +1,5 @@
+# Input: NAME. Screenshot named after the screen; matrix-sweep.sh runs flows from the config dir.
+appId: ${APP_ID}
+---
+- waitForAnimationToEnd
+- takeScreenshot: ${NAME}

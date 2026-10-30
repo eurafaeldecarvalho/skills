@@ -1,0 +1,26 @@
+# Two devices: run part A on device 1, part B on device 2 (see reference/functional-testing.md).
+# maestro --device emulator-5554 test -e PART=A -e EMAIL=$A_EMAIL -e PASSWORD=$A_PW two-account-invite.yaml
+# maestro --device emulator-5556 test -e PART=B -e EMAIL=$B_EMAIL -e PASSWORD=$B_PW -e CODE=$CODE two-account-invite.yaml
+appId: ${APP_ID}
+tags: [multi-user]
+---
+- runFlow: ../subflows/launch-clean.yaml
+- runFlow: ../subflows/login.yaml
+- runFlow:
+    when: { true: "${PART == 'A'}" }
+    commands:
+      - tapOn: { id: "tab-settings" }
+      - tapOn: { id: "family-invite" }
+      - copyTextFrom: { id: "invite-code" }
+      - evalScript: ${output.code = maestro.copiedText}
+      - takeScreenshot: invite-code
+- runFlow:
+    when: { true: "${PART == 'B'}" }
+    commands:
+      - tapOn: { id: "family-join" }
+      - tapOn: { id: "join-code" }
+      - inputText: ${CODE}
+      - tapOn: { id: "join-submit" }
+      - extendedWaitUntil: { visible: { id: "home-root" }, timeout: 20000 }
+      - tapOn: { id: "tab-expenses" }
+      - assertVisible: { id: "expense-list" }

@@ -1,0 +1,11 @@
+# Offline banner must appear when offline and disappear by itself after reconnect.
+appId: ${APP_ID}
+tags: [resilience]
+---
+- runFlow: ../subflows/launch-clean.yaml
+- runFlow: ../subflows/login.yaml
+- setAirplaneMode: enabled
+- extendedWaitUntil: { visible: { id: "banner-offline" }, timeout: 30000 }
+- setAirplaneMode: disabled
+- extendedWaitUntil: { notVisible: { id: "banner-offline" }, timeout: 45000 }  # ≤ retry interval + margin
+- assertNotVisible: { id: "banner-sending" }

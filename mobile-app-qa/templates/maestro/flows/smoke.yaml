@@ -1,0 +1,12 @@
+appId: ${APP_ID}
+tags: [smoke]
+---
+- runFlow: ../subflows/launch-clean.yaml
+- runFlow: ../subflows/login.yaml
+- assertVisible: { id: "home-root" }
+- assertNotVisible: "undefined"
+- assertNotVisible: "NaN"
+- tapOn: { id: "tab-settings" }
+- assertVisible: { id: "settings-root" }
+- back
+- assertVisible: { id: "home-root" }

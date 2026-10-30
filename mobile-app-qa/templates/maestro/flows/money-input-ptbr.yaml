@@ -1,0 +1,24 @@
+# Run with the app (or device) in pt-BR: comma decimals must work and display R$ 1.234,56.
+appId: ${APP_ID}
+tags: [l10n, money]
+---
+- runFlow: ../subflows/launch-clean.yaml
+- runFlow: ../subflows/login.yaml
+- runFlow: { file: ../subflows/set-language.yaml, env: { LANG: "pt-BR" } }
+- tapOn: { id: "tab-expenses" }
+- tapOn: { id: "expense-add" }
+- tapOn: { id: "expense-title" }
+- inputText: "Material escolar"
+- tapOn: { id: "expense-amount" }
+- inputText: "1234,56"
+- hideKeyboard
+- assertNotVisible: { id: "expense-amount-error" }
+- tapOn: { id: "expense-save" }
+# exact formatted value (U+00A0 between R$ and digits); regex tolerates either space
+- assertVisible: { text: "R\\$\\s1\\.234,56" }
+- assertNotVisible: { text: ".*1,234\\.56.*" }
+# restart: value persisted and still formatted
+- stopApp
+- launchApp: { appId: "${APP_ID}" }
+- tapOn: { id: "tab-expenses" }
+- assertVisible: { text: "R\\$\\s1\\.234,56" }

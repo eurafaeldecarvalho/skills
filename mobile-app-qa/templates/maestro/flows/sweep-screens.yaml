@@ -1,0 +1,16 @@
+# Navigate every screen by testID and capture it. Extend with every screen/state in FEATURES.md.
+appId: ${APP_ID}
+tags: [sweep]
+---
+- launchApp: { appId: "${APP_ID}" }
+- runFlow: { file: ../subflows/capture.yaml, env: { NAME: "home" } }
+- tapOn: { id: "tab-expenses" }
+- runFlow: { file: ../subflows/capture.yaml, env: { NAME: "expenses" } }
+- tapOn: { id: "expense-add" }
+- runFlow: { file: ../subflows/capture.yaml, env: { NAME: "expense-new" } }
+- tapOn: { id: "expense-amount" }
+- runFlow: { file: ../subflows/capture.yaml, env: { NAME: "expense-new-keyboard" } }
+- hideKeyboard
+- back
+- tapOn: { id: "tab-settings" }
+- runFlow: { file: ../subflows/capture.yaml, env: { NAME: "settings" } }

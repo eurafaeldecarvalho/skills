@@ -1,0 +1,7 @@
+# .maestro/config.yaml — copy into the app repo
+flows:
+  - "flows/*"
+includeTags: []
+excludeTags: [manual]
+executionOrder:
+  continueOnFailure: true

@@ -1,0 +1,12 @@
+# Inputs: EMAIL, PASSWORD (pass with -e; never commit credentials)
+appId: ${APP_ID}
+---
+- tapOn: { id: "login-email" }
+- inputText: ${EMAIL}
+- tapOn: { id: "login-password" }
+- inputText: ${PASSWORD}
+- hideKeyboard
+- tapOn: { id: "login-submit" }
+- extendedWaitUntil:
+    visible: { id: "home-root" }
+    timeout: 20000
