@@ -44,6 +44,10 @@ functional-testing method and scripts are original. More sources in
 - **Repo:** Expo/RN + TypeScript; unit tests (Vitest or Jest); `tsc --noEmit`; ESLint.
 - **Android SDK + JDK 17** (emulator, `adb`, `avdmanager`, `bundletool` for `.aab` → universal APK).
   KVM on Linux for a usable emulator. On the owner's box: SDK `/home/box/android-sdk`, JDK `/home/box/jdk17`.
+  **No KVM** (VM without nested virtualization: `-accel off`, ~15 min boot)? Run the emulator passes on
+  **GitHub Actions** with [`templates/ci/android-emulator-maestro.yml`](templates/ci/android-emulator-maestro.yml)
+  (KVM on free runners, 35-58 s boot, ~10-13 min/API level; API 30 = 3-button + 34 = gesture nav) →
+  [reference/device-clouds.md](reference/device-clouds.md).
 - **Maestro** (`curl -fsSL https://get.maestro.mobile.dev | bash`) for E2E flows on the **release** build.
 - **This skill's scripts:** [`scripts/matrix-sweep.sh`](scripts/matrix-sweep.sh) (config matrix ×
   screens → screenshots + UI dumps), [`scripts/sweep-check.py`](scripts/sweep-check.py) (detectors:
@@ -68,10 +72,12 @@ functional-testing method and scripts are original. More sources in
 - **Templates:** [`templates/`](templates/) — `APP-QA.md` context file, `FEATURES.md` inventory,
   `glossary-template.md` (per-locale conventions + glossary + tone guide), Maestro config/flows/subflows
   (smoke, pt-BR money input, offline banner recovery, screen sweep, two-account invite, red-team inputs), report with iteration ledger + tester
-  bug template.
-- **Cloud (free tiers, optional):** Google Play **pre-launch report** (runs automatically on
-  closed/open test uploads), Firebase Test Lab Spark (10 virtual + 5 physical runs/day; service is
-  deprecated, shuts down 2027-09-30). Anything paid needs the owner's approval.
+  bug template, `ci/android-emulator-maestro.yml` (GitHub Actions emulator + Maestro job).
+- **Cloud (free tiers, tested and ranked → [reference/device-clouds.md](reference/device-clouds.md)):**
+  1. GitHub Actions emulator (best; 2,000 free min/month private, unlimited public); 2. Firebase Test Lab
+  Spark (10 virtual + 5 physical runs/day, no card; shuts down 2027-09-30); 3. Play internal track +
+  pre-launch report (report seems to need a closed-track upload — confirm); 4. Samsung Remote Test Lab
+  (real Galaxy devices, manual from a desktop browser only). Anything paid needs the owner's approval.
 - **Real hardware:** at least one low/mid Android (Moto G / Galaxy A / Redmi class) + ≥2 real testers.
 
 ## How to run the pass (order matters)
@@ -85,13 +91,13 @@ functional-testing method and scripts are original. More sources in
 | 2 | **Audit** (code + build) | Everything measurable without a person: types, lint, unit/integration tests, release config, theming tokens, i18n catalog, formatting helpers, RLS/security, dead flags. | scored findings |
 | 3 | **Functional E2E** | Every inventory row: happy path + edge + failure, automated with Maestro where possible; two-account flows; data correctness checked against an oracle. | findings + flows |
 | 3b | **Live E2E** (mandatory) | Real backend, real tagged accounts (`qa+<run>@…`), real emails in a real inbox (arrival, spam, SPF/DKIM, links), real DB rows checked with SQL, RLS between real accounts, real FCM push on devices (fg/bg/killed), two devices for multi-user, uploads, test-mode billing, account deletion, then verified cleanup. Never touches real users' data; never prints secrets. | live evidence + cleanup log |
-| 4 | **Matrix sweep** | Every screen × light/dark × every locale × font scale × screen size × 3-button/gesture nav on the release build; detectors (incl. `label-offcenter`, `image-distortion`) + human review of the contact sheet and crops. | findings + screenshots |
+| 4 | **Matrix sweep** | Every screen × light/dark × every locale × font scale × screen size × 3-button/gesture nav on the release build (emulator locally with KVM, else GitHub Actions API 30 + 34 → [reference/device-clouds.md](reference/device-clouds.md)); detectors (incl. `label-offcenter`, `image-distortion`) + human review of the contact sheet and crops. | findings + screenshots |
 | 4b | **Launch/splash pass** (mandatory) | `--launch-audit` of the splash/icon config, then screenrecord **cold + warm (+ hot)** launches in **light + dark** on small, 1080×2400 and tablet profiles: Android 12+ SplashScreen rules (icon inside the 160/192 dp circle, no stretching, background color per theme), adaptive + monochrome launcher icon, native splash → first screen with no flash/jump/blank; frame detectors + human review of the strips. → [reference/launch-and-visual-precision.md](reference/launch-and-visual-precision.md) | `qa/splash/<run>/` frames + strips |
 | 5 | **Harden** | Offline/slow/flaky network, process death, permissions denied, background/foreground, push, deep links, extreme data, clock/timezone, upgrades. | findings |
 | 6 | **Critique** (look & UX) | Use the app like a first-time user on a real phone; judge hierarchy, clarity, feedback, consistency, platform conformance (Material 3 on Android). | findings |
 | 6b | **RED-TEAM** (mandatory, every iteration) | Act as attacker and hostile user: chaos (monkey with seeds, fuzz/adversarial inputs, double taps, kill/airplane mid-write, trim-memory, low storage, clock/DST, rotation, permission revoke, two users editing the same record, expired session) **and** security abuse (RLS/IDOR across spaces, privilege escalation between co-parents, invite abuse, RPC/storage/realtime access, tampered requests, injection, auth abuse, deep-link injection, APK secrets, PII in logs, consent). Every successful attack is a finding. → [reference/red-team.md](reference/red-team.md) | `qa/red-team/<iter>/` |
 | 7 | **Convergence loop** | Fix in severity order (failing regression test first, one commit per finding), then re-run the **FULL** pass 2–6b plus all regression tests; repeat until **two consecutive full iterations have zero findings of any severity** (the second with fresh seeds/inputs). Iteration ledger, anti-cheating rules, safety cap → [reference/convergence-loop.md](reference/convergence-loop.md) | ledger + commits |
-| 7b | **FINAL PASS** (mandatory) | After the loop exits: build the signed release artifact (AAB → `bundletool build-apks --mode=universal` with the upload key, or a release APK), `adb install` it on **clean emulators** (headless Linux; Android 14 and 15/16, Play Store image, mid-range 1080×2400 and a small-screen profile) as a **fresh install AND an update over the previous version**, then run the real app end to end: full feature walkthrough, live backend flows, whole Maestro suite, matrix sweep, red-team quick pass, logcat `*:E`/crash/ANR scan, `dumpsys gfxinfo`, screenshots + `screenrecord` video. Preferably also install from the Play closed-test track on a real phone. **Any finding restarts the loop.** → [reference/final-pass.md](reference/final-pass.md) | `qa/final/` evidence |
+| 7b | **FINAL PASS** (mandatory) | After the loop exits: build the signed release artifact (AAB → `bundletool build-apks --mode=universal` with the upload key, or a release APK), `adb install` it on **clean emulators** (headless Linux; Android 14 and 15/16, Play Store image, mid-range 1080×2400 and a small-screen profile) as a **fresh install AND an update over the previous version**, then run the real app end to end (no local KVM → same on GitHub Actions, API 30 + 34, see [reference/device-clouds.md](reference/device-clouds.md)): full feature walkthrough, live backend flows, whole Maestro suite, matrix sweep, red-team quick pass, logcat `*:E`/crash/ANR scan, `dumpsys gfxinfo`, screenshots + `screenrecord` video. Preferably also install from the Play closed-test track on a real phone. **Any finding restarts the loop.** → [reference/final-pass.md](reference/final-pass.md) | `qa/final/` evidence |
 | 8 | **Gate + release** | Only after the loop exits and the FINAL PASS is clean: run the release gate; upload to the test track; read the pre-launch report; smoke-test the store-installed build on a real phone. | gate report |
 | 9 | **Feedback loop** | Every tester report → reproduce → finding → back into the convergence loop (full pass, two clean iterations) → new bug classes go into the anti-pattern catalog and the red-team corpus. | bug log |
 

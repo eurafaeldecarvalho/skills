@@ -69,3 +69,10 @@ fix-until-green loop.
 - Slow rendering / `dumpsys gfxinfo` — https://developer.android.com/topic/performance/rendering/inspect-gpu-rendering
 - ApplicationExitInfo reasons — https://developer.android.com/reference/android/app/ApplicationExitInfo
 - Play internal/closed testing — https://support.google.com/googleplay/android-developer/answer/9845334
+
+## Device clouds and CI emulators (see device-clouds.md)
+- reactivecircus/android-emulator-runner — https://github.com/ReactiveCircus/android-emulator-runner
+- GitHub Actions billing / included minutes — https://docs.github.com/en/billing/managing-billing-for-your-products/managing-billing-for-github-actions/about-billing-for-github-actions
+- GitHub-hosted runners (Linux, /dev/kvm) — https://docs.github.com/en/actions/using-github-hosted-runners/using-github-hosted-runners/about-github-hosted-runners
+- Firebase Test Lab Robo test — https://firebase.google.com/docs/test-lab/android/robo-ux-test-basics
+- Samsung Remote Test Lab — https://developer.samsung.com/remote-test-lab

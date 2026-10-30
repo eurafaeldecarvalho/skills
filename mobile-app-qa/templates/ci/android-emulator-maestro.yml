@@ -1,0 +1,177 @@
+# android-emulator-maestro.yml — generic Android emulator + Maestro QA job for GitHub Actions.
+#
+# USAGE (copy to .github/workflows/ in the app repo or a private QA repo):
+#   1. Put the APK on a release (prerelease is fine):  gh release create apk-vcN app.apk --prerelease
+#      (never commit APKs). x86_64 ABI must be in the APK (universal or x86_64 split).
+#   2. Put Maestro flows in the repo (default dir .maestro/ with config.yaml; select by testID).
+#   3. Run:  gh workflow run android-emulator-maestro.yml -f app-id=com.example.app -f apk-tag=apk-vcN \
+#              -f api-levels='[34]' -f gating-flows='.maestro/flows/smoke.yaml'
+#      Watch: gh run watch ; get evidence: gh run download <run-id> -D qa/ci/
+#   Pushing this file needs a token with the `workflow` scope (classic) / "Workflows: write" (fine-grained).
+#   Hardware acceleration: GitHub-hosted ubuntu-latest exposes /dev/kvm; the udev step below makes it usable.
+#   Cost: private repos consume Actions minutes (Free plan: 2,000 min/month); public repos are free.
+#   Measured (2 vCPU / 8 GB runner, swiftshader GPU): KVM usable ("KVM (version 12) is installed and usable"),
+#   cold AVD boot 35-58 s, launch-to-ready 21-47 s, whole job 10-13 min per API level incl. full suite.
+#   Matrix jobs run in parallel but each bills its own minutes.
+# GOTCHAS learned the hard way:
+#   - `emulator -accel-check` only works AFTER the runner action installs the emulator, so it runs in-script.
+#   - Fresh AVDs on 2 vCPU often show "Pixel Launcher isn't responding" over the app -> every testID
+#     selector fails. Fixed by: ram-size 3072M, hide_error_dialogs=1, settle 20 s, dismiss_anr before each step.
+#   - actions/cache does NOT save the AVD when the job fails; first green run per API level warms it.
+#   - Emulator locale is en-US: share sheets say "Sharing", not "Compartilhar"; use locale-tolerant regex.
+#   - Bottom-anchored CTAs are hidden behind the 3-button nav bar on API 30 (gesture pill on 34). If the app
+#     ignores safe-area insets, flows fail on API 30 only: that is a real app bug, not infra.
+#   - Use scrollUntilVisible for anything below the fold (1080x2400 @420dpi pixel_6 profile).
+#   - The emulator-runner `script:` runs line by line; keep logic in one bash file (written below).
+#   No secrets needed. If flows need credentials, pass them as repo secrets -> env and `-e KEY=$KEY`.
+name: android-emulator-maestro
+
+on:
+  workflow_dispatch:
+    inputs:
+      app-id:        { description: "Android package name", required: true }
+      apk-tag:       { description: "Release tag holding the APK asset", required: true }
+      apk-pattern:   { description: "Asset glob", default: "*.apk" }
+      api-levels:    { description: "JSON list of API levels, e.g. [34] or [30, 34]", default: "[34]" }
+      target:        { description: "default | google_apis | google_apis_playstore", default: "google_apis" }
+      profile:       { description: "avdmanager device profile", default: "pixel_6" }
+      maestro-dir:   { description: "Maestro workspace (config.yaml)", default: ".maestro" }
+      gating-flows:  { description: "Space-separated flow files that must pass", default: ".maestro/flows/smoke.yaml" }
+      run-full-suite: { description: "Also run the whole maestro-dir (informational)", type: boolean, default: true }
+
+permissions:
+  contents: read
+
+jobs:
+  emulator:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        api-level: ${{ fromJSON(inputs.api-levels) }}
+    env:
+      APP_ID: ${{ inputs.app-id }}
+      OUT: ${{ github.workspace }}/out
+      GATING_FLOWS: ${{ inputs.gating-flows }}
+      MAESTRO_DIR: ${{ inputs.maestro-dir }}
+      RUN_FULL: ${{ inputs.run-full-suite }}
+      MAESTRO_CLI_NO_ANALYTICS: "1"
+      MAESTRO_DISABLE_UPDATE_CHECK: "1"
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Enable KVM + record acceleration
+        run: |
+          mkdir -p "$OUT"
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+          { date -u; nproc; free -m; ls -l /dev/kvm || echo "NO /dev/kvm"; } | tee "$OUT/host.txt"
+
+      - name: Download APK
+        env: { GH_TOKEN: "${{ github.token }}" }
+        run: |
+          gh release download "${{ inputs.apk-tag }}" --pattern '${{ inputs.apk-pattern }}' --dir apk
+          echo "APK_PATH=$(ls "$PWD"/apk/*.apk | head -1)" >> "$GITHUB_ENV"
+
+      - uses: actions/setup-java@v5
+        with: { distribution: temurin, java-version: "17" }
+
+      - name: Install Maestro
+        run: |
+          curl -fsSL https://get.maestro.mobile.dev | bash
+          echo "$HOME/.maestro/bin" >> "$GITHUB_PATH"
+
+      # emulator-runner executes `script` line by line, so the logic lives in a file.
+      - name: Write in-emulator script
+        run: |
+          mkdir -p .ci && cat > .ci/in-emulator.sh <<'SH'
+          #!/usr/bin/env bash
+          set -u
+          mkdir -p "$OUT/screens" "$OUT/ui" "$OUT/maestro"; STEPS="$OUT/steps.txt"; : > "$STEPS"; FAIL=0
+          step() { local n="$1"; shift; local t=$(date +%s); if "$@" >>"$OUT/run.log" 2>&1; then echo "PASS $n ($(( $(date +%s)-t ))s)"; else echo "FAIL $n ($(( $(date +%s)-t ))s)"; FAIL=1; fi | tee -a "$STEPS"; }
+          shot() { dismiss_anr; adb exec-out screencap -p > "$OUT/screens/$1.png"; adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1 && adb pull /sdcard/ui.xml "$OUT/ui/$1.xml" >/dev/null 2>&1; true; }
+          launch() { adb shell am force-stop "$APP_ID"; adb shell monkey -p "$APP_ID" -c android.intent.category.LAUNCHER 1 >/dev/null; sleep "${1:-10}"; }
+          mt() { dismiss_anr; local n="$1"; shift; maestro test "$@" -e APP_ID="$APP_ID" --format junit --output "$OUT/maestro/$n.xml" --test-output-dir "$OUT/maestro/$n" --debug-output "$OUT/maestro/$n/debug"; }
+          dismiss_anr() {  # 2-vCPU runners often show "Pixel Launcher isn't responding" over the app
+            for i in 1 2 3; do
+              adb shell uiautomator dump /sdcard/d.xml >/dev/null 2>&1 && adb pull /sdcard/d.xml /tmp/d.xml >/dev/null 2>&1 || return 0
+              grep -q "isn't responding\|keeps stopping" /tmp/d.xml || return 0
+              echo "dismissed system dialog" >> "$OUT/infra-dialogs.txt"
+              xy=$(python3 -c "import re;x=open('/tmp/d.xml').read();m=re.search(r'resource-id=\"android:id/aerr_(wait|close)\"[^>]*bounds=\"\[(\d+),(\d+)\]\[(\d+),(\d+)\]',x);print((int(m[2])+int(m[4]))//2,(int(m[3])+int(m[5]))//2) if m else print('')")
+              if [ -n "$xy" ]; then adb shell input tap $xy; else adb shell input keyevent KEYCODE_BACK; fi
+              sleep 3
+            done
+          }
+          echo "launch_to_ready_s=$(( $(date +%s) - $(cat /tmp/emu_launch_ts) ))" | tee "$OUT/boot.txt"
+          adb shell getprop ro.build.version.sdk | tee -a "$OUT/boot.txt"
+          "$ANDROID_HOME/emulator/emulator" -accel-check > "$OUT/accel-check.txt" 2>&1 || true
+          adb shell settings put global hide_error_dialogs 1   # suppress system ANR/crash dialogs; crashes still hit logcat
+          for i in $(seq 1 30); do [ "$(adb shell getprop sys.boot_completed | tr -d '\r')" = 1 ] && break; sleep 2; done
+          sleep 20; dismiss_anr; adb logcat -c || true
+          step install adb install -r "$APK_PATH"
+          step launch launch 15; shot first-screen
+          step alive bash -c "adb shell pidof $APP_ID"
+          for f in $GATING_FLOWS; do step "maestro:$(basename "$f" .yaml)" mt "$(basename "$f" .yaml)" "$f"; done
+          G=$FAIL; [ "$RUN_FULL" = "true" ] && step maestro_full_suite_info mt full "$MAESTRO_DIR"; FAIL=$G
+          adb shell settings put system font_scale 1.3; launch 12; shot font-1.3
+          adb shell cmd uimode night yes; echo "uimode: $(adb shell cmd uimode night)" >> "$STEPS"; launch 12; shot font-1.3-night
+          adb shell settings put system font_scale 1.0; launch 12; shot night
+          adb shell cmd uimode night no
+          step alive_after_passes bash -c "adb shell pidof $APP_ID"
+          adb logcat -d -v threadtime > "$OUT/logcat.txt" || true
+          grep -E "FATAL EXCEPTION|ANR in| E AndroidRuntime| E ReactNativeJS" "$OUT/logcat.txt" > "$OUT/logcat-errors.txt" || true
+          echo "crashes=$(grep -c 'FATAL EXCEPTION' "$OUT/logcat.txt") anrs=$(grep -c 'ANR in' "$OUT/logcat.txt")" | tee -a "$STEPS"
+          exit $FAIL
+          SH
+
+      - name: AVD cache
+        uses: actions/cache@v5
+        id: avd-cache
+        with:
+          path: |
+            ~/.android/avd/*
+            ~/.android/adb*
+          key: avd-${{ matrix.api-level }}-${{ inputs.target }}-${{ inputs.profile }}-x86_64-3g
+
+      - name: Create AVD snapshot (cache miss only)
+        if: steps.avd-cache.outputs.cache-hit != 'true'
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: ${{ matrix.api-level }}
+          target: ${{ inputs.target }}
+          arch: x86_64
+          profile: ${{ inputs.profile }}
+          ram-size: 3072M
+          force-avd-creation: false
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          disable-animations: false
+          script: echo "AVD snapshot generated"
+
+      - name: Run QA in emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: ${{ matrix.api-level }}
+          target: ${{ inputs.target }}
+          arch: x86_64
+          profile: ${{ inputs.profile }}
+          ram-size: 3072M
+          force-avd-creation: false
+          emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          disable-animations: true
+          pre-emulator-launch-script: date +%s > /tmp/emu_launch_ts
+          script: bash .ci/in-emulator.sh
+
+      - name: Summary
+        if: always()
+        run: |
+          { echo "### API ${{ matrix.api-level }} / ${{ inputs.target }}"; echo '```'; cat "$OUT"/host.txt "$OUT"/accel-check.txt "$OUT"/boot.txt "$OUT"/steps.txt 2>/dev/null; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: qa-api${{ matrix.api-level }}-${{ inputs.target }}
+          path: out/
+          if-no-files-found: warn

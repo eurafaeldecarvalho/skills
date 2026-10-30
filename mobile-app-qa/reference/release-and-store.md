@@ -11,6 +11,8 @@
 - **Firebase Test Lab** (Spark/free: ~10 virtual + 5 physical test runs per day; check quotas) for robo or
   instrumentation tests on device models you don't own. Note: Google announced Test Lab's deprecation
   (shutdown 2027-09-30) — don't build long-term CI on it.
+- Measured results for these and other device clouds (what worked, quotas, gotchas):
+  [device-clouds.md](device-clouds.md).
 - Store-installed smoke test: after rollout to a track, install from Play on a real phone and run the
   core flow (Play signing, App Bundle splits and dynamic delivery can differ from your local APK).
 

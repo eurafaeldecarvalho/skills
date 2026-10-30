@@ -11,8 +11,9 @@
 | Foldable/tablet (if supported) | Pixel Fold / tablet emulator | resizing, two-pane, rotation |
 | Oldest supported Android | minSdk device/emulator | API gaps, Hermes Intl differences, permission models |
 | Newest Android | latest stable API | edge-to-edge enforced (Android 15+), predictive back, new permission rules |
-Free reach: Play pre-launch report runs on several real devices; Firebase Test Lab Spark quota
-(see [release-and-store.md](release-and-store.md)). Real hardware is still required for the gate.
+Free reach: Play pre-launch report runs on several real devices; Firebase Test Lab Spark quota;
+Samsung Remote Test Lab for real Galaxy models; GitHub Actions emulators for API 30 (3-button) + 34
+(gesture) — tested and ranked in [device-clouds.md](device-clouds.md). Real hardware is still required for the gate.
 
 ## Edge-to-edge and insets (SDK 54+/Android 15+ = always edge-to-edge)
 - Use `react-native-safe-area-context` (`SafeAreaView edges` / `useSafeAreaInsets`) on every screen root,
