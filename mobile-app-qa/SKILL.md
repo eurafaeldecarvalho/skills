@@ -59,6 +59,7 @@ functional-testing method and scripts are original. More sources in
 - **Shared machine:** [`scripts/box-reserve.sh`](scripts/box-reserve.sh) (`status` load + locks + slots,
   `reserve` with overlap check, `acquire`/`check`/`left`/`release` lock; trap-friendly). Schedule:
   `/home/box/shared/box-schedule.md`. `final-pass.sh` and `matrix-sweep.sh` refuse to run without a lock.
+  RAM GO/NO-GO and watchdog: `/home/box/shared/box-preflight.sh` (from `roblox-game-qa/scripts/`) when present.
 - **FINAL PASS:** [`scripts/final-pass.sh`](scripts/final-pass.sh) (`setup` SDK images + AVDs, `boot` a clean
   headless emulator, `install` fresh, `update-prev` + `update` over the previous version, `evidence`/`record`
   screenshots and video, `logscan` crash/ANR/error/PII scan, `perf` gfxinfo/meminfo).

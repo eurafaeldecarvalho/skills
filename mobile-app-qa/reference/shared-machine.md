@@ -12,7 +12,15 @@ ps -eo pid,user,etimes,rss,comm --sort=-rss | grep -E 'qemu|emulator|gradle|java
 adb devices                                   # emulators already running (whose?)
 scripts/box-reserve.sh status                 # all of the above + live locks + booked slots
 ```
-If RAM available < ~6 GB or another emulator/build is running, you are not alone — don't start anything heavy.
+If RAM available < ~6 GB or another emulator/build (or an open Roblox Studio/Wine session) is running, you are not
+alone — don't start anything heavy.
+
+**RAM preflight and watchdog:** if `/home/box/shared/box-preflight.sh` is installed (canonical copy:
+[`roblox-game-qa/scripts/box-preflight.sh`](../../roblox-game-qa/scripts/box-preflight.sh)), use it instead of
+eyeballing: `box-preflight.sh check -r build,emulator` (GO/NO-GO: estimated job RAM + 2 GB headroom, exit 5 = no
+RAM) before starting, and `box-preflight.sh watch --pid <your emulator/gradle pid> --log qa/ram.log --kill`
+while running (stops only your own job when RAM gets critical; the box has no swap). It never books or locks —
+the reservation below is still required.
 
 ## 2. Book a slot (shared schedule + lock files)
 - Schedule: `/home/box/shared/box-schedule.md` (markdown table; box-local time, BRT on the owner's box).
@@ -35,7 +43,8 @@ scripts/box-reserve.sh acquire -p "$BOX_PROJECT" -r build,emulator --pid $$ \
   && trap 'scripts/final-pass.sh stop; (cd android && ./gradlew --stop); scripts/box-reserve.sh release -p "$BOX_PROJECT" -r build,emulator' EXIT
 ```
 `acquire` refuses outside your slot (exit 4), while someone else holds a live lock (exit 4) or when free RAM is
-below `MIN_FREE_GB` (exit 5). `final-pass.sh` and `matrix-sweep.sh` refuse to start without a valid lock
+below the resource's minimum (exit 5): `MIN_FREE_GB` (default 6) or per resource, fractions allowed —
+`MIN_FREE_GB_STUDIO=4.5`, or `MIN_FREE_GB_MAP="studio=4.5,emulator=6"`; built-in `studio=4.5`. `final-pass.sh` and `matrix-sweep.sh` refuse to start without a valid lock
 (`BOX_FORCE=1`/`--force` only when the owner said the box is yours). Release on success **and** failure.
 
 ## 4. Resource caps (stay a good neighbour)

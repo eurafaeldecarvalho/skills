@@ -13,10 +13,22 @@
 # Recurring slots are added by hand: | daily 09:00 | 12:00 | Project | Owner | all | recurring from 2026-10-31 | note |
 # ("all" = exclusive use of the box; "cancelled" in Status disables a row).
 # In scripts:  box-reserve.sh acquire -p "$BOX_PROJECT" -r emulator && trap 'box-reserve.sh release -p "$BOX_PROJECT" -r emulator' EXIT
-# Env: BOX_SHARED (default /home/box/shared), MIN_FREE_GB (default 6), BOX_PROJECT (default for -p).
+# Env: BOX_SHARED (default /home/box/shared), BOX_PROJECT (default for -p),
+#      MIN_FREE_GB (default 6) free RAM needed by `acquire`; per resource (fractions ok, highest wins):
+#      MIN_FREE_GB_<RES> (e.g. MIN_FREE_GB_STUDIO=4.5) > MIN_FREE_GB_MAP="studio=4.5,emulator=6" > MIN_FREE_GB
+#      if set > built-in (studio=4.5) > 6.
 # Exit codes: 0 ok · 2 usage · 3 slot overlaps another booking · 4 lock held by someone else / no slot · 5 not enough free RAM
 set -euo pipefail
-SH=${BOX_SHARED:-/home/box/shared}; SCHED="$SH/box-schedule.md"; LOCKS="$SH/locks"; MIN_FREE_GB=${MIN_FREE_GB:-6}
+SH=${BOX_SHARED:-/home/box/shared}; SCHED="$SH/box-schedule.md"; LOCKS="$SH/locks"
+MIN_FREE_SET=${MIN_FREE_GB:+1}; MIN_FREE_GB=${MIN_FREE_GB:-6}
+min_free(){ # GB of free RAM required before taking resource $1
+  local n=${1^^}; n=${n//[^A-Z0-9]/_}; local v="MIN_FREE_GB_$n"
+  [ -n "${!v:-}" ] && { echo "${!v}"; return; }
+  local m; m=$(echo ",${MIN_FREE_GB_MAP:-}," | grep -oE ",$1=[0-9.]+," | head -1 | tr -d ',' | cut -d= -f2)
+  [ -n "$m" ] && { echo "$m"; return; }
+  [ -n "$MIN_FREE_SET" ] && { echo "$MIN_FREE_GB"; return; }
+  case "$1" in studio) echo 4.5;; *) echo "$MIN_FREE_GB";; esac; }
+avail_gb(){ awk '/MemAvailable/{printf "%.1f", $2/1048576}' /proc/meminfo; }
 mkdir -p "$LOCKS"
 cmd=${1:-}; shift || true
 P=${BOX_PROJECT:-}; O=${BOX_OWNER:-$(whoami)}; R=""; S=""; E=""; N=""; PID=$PPID; FORCE=0
@@ -69,10 +81,10 @@ lock_live(){ # lock exists, pid alive, end not passed
 need(){ for v in "$@"; do [ -n "${!v}" ] || { echo "missing -${v,,} (see header)"; exit 2; }; done; }
 case "$cmd" in
   status)
-    echo "== load ($(date '+%F %H:%M %Z'))"; echo "cores: $(nproc) · $(uptime | sed 's/.*load/load/')"
+    echo "== load ($(date '+%F %H:%M %Z'))"; echo "cores: $(nproc) · $(uptime | sed 's/.*load/load/') · RAM available $(avail_gb) G"
     free -h | sed -n '1,2p'; df -h /home 2>/dev/null | tail -1 | awk '{print "disk /home: "$4" free"}'
     echo "== heavy processes (all users; look, never kill others')"
-    ps -eo pid,user,etimes,rss,comm,args --sort=-rss | grep -E 'qemu|emulator|gradle|java|node|maestro|kotlin' | grep -v grep | head -15 | awk '{printf "%s %s %ss %dMB %s\n",$1,$2,$3,$4/1024,$5}' || true
+    ps -eo pid,user,etimes,rss,comm,args --sort=-rss | grep -E 'qemu|emulator|gradle|java|node|maestro|kotlin|RobloxStudio|StudioMCP|vinegar|wineserver' | grep -v grep | head -15 | awk '{printf "%s %s %ss %dMB %s\n",$1,$2,$3,$4/1024,$5}' || true
     command -v adb >/dev/null && { echo "== adb devices"; adb devices | tail -n +2; }
     echo "== locks"; for f in "$LOCKS"/*.lock; do [ -e "$f" ] || { echo "(none)"; break; }
       st=stale; lock_live "$f" && st=LIVE; echo "$(basename "$f" .lock): $st · $(tr '\n' ' ' < "$f")"; done
@@ -100,8 +112,8 @@ case "$cmd" in
       [ "$(ts "$(field "$l" 2)")" -le "$now" ] && [ "$(ts "$(field "$l" 3)")" -gt "$now" ] && slot=$l; done < <(day_rows "$(date +%F)")
     if [ -z "$slot" ] && [ $FORCE = 0 ]; then echo "No slot for $P/$R covering now. Run 'status', book one with 'reserve'."; exit 4; fi
     end=$( [ -n "$slot" ] && field "$slot" 3 || date -d '+1 hour' '+%F %H:%M')
-    avail=$(free -g | awk '/Mem:/{print $7}')
-    if [ "$avail" -lt "$MIN_FREE_GB" ] && [ $FORCE = 0 ]; then echo "Only ${avail}G RAM available (< $MIN_FREE_GB G). Someone is still running; check 'status', don't kill their processes."; exit 5; fi
+    avail=$(avail_gb); need=0; for r in ${R//,/ }; do need=$(awk -v a="$need" -v b="$(min_free "$r")" 'BEGIN{print (b>a)?b:a}'); done
+    if awk -v a="$avail" -v n="$need" 'BEGIN{exit !(a<n)}' && [ $FORCE = 0 ]; then echo "Only ${avail}G RAM available (< ${need} G for $R). Someone is still running; check 'status' (and box-preflight.sh if installed), don't kill their processes."; exit 5; fi
     exec 9>"$LOCKS/.schedule"; flock 9
     for r in ${R//,/ }; do f=$(lockfile "$r")
       if lock_live "$f" && [ "$(sed -n 's/^project=//p' "$f")" != "$P" ]; then echo "LOCKED by: $(tr '\n' ' ' < "$f")"; exit 4; fi
@@ -122,5 +134,5 @@ case "$cmd" in
       [ -f "$f" ] && [ "$(sed -n 's/^project=//p' "$f")" = "$P" ] && rm -f "$f"; done
     [ -f "$SCHED" ] && sed -i -E "s#^(\| [^|]+ \| [^|]+ \| $P \|.*\| )active( \|.*)#\1done\2#" "$SCHED"
     echo "released $R for $P" ;;
-  *) sed -n '2,20p' "$0"; exit 2 ;;
+  *) sed -n '2,23p' "$0"; exit 2 ;;
 esac
