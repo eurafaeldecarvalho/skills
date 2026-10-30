@@ -8,9 +8,12 @@
 local CONFIG = {
 	DELAY_S = 8, -- let the UI settle (loading screens, tweens)
 	MIN_TEXT_PX = 12, -- floor in real pixels after UIScale/TextScaled; set from GAME-QA.md (phones: ~14)
-	MIN_TARGET_PX = 44, -- smallest side of an Active button
+	MIN_TARGET_PX = 44, -- smallest side of an Active button on TOUCH (TouchEnabled: phone/tablet/Device Emulator)
+	MIN_MOUSE_TARGET_PX = 24, -- mouse-only client (Studio PC window): 44 is a touch rule; games often scale buttons up only on touch
 	OVERLAP_PX = 4, -- interactive rectangles overlapping more than this on both axes
 	MAX_REPORT = 30, -- per rule
+	TAG = "UI-AUDIT", -- report tag (use one tag per screen, e.g. UI-AUDIT-LOBBY / UI-AUDIT-T1)
+	CHANNEL_WAIT_S = 30, -- 0 = do not wait for QA_Channel (run directly with execute_luau datamodel_type=Client)
 }
 local Players = game:GetService("Players")
 local GuiService = game:GetService("GuiService")
@@ -57,9 +60,13 @@ local function scaleOf(o)
 	return s
 end
 local function rect(o, sg)
+	-- screen coordinates. AbsolutePosition is measured from the ScreenGui's own origin, and current Studio puts
+	-- an IgnoreGuiInset gui's origin at (0, -inset.Y) (a full-screen frame reads y = -58 there). Subtract the
+	-- gui's origin and add where that gui really starts on screen, so both old and new engine behaviour work.
 	local p, s = o.AbsolutePosition, o.AbsoluteSize
+	local o0 = sg.AbsolutePosition
 	local top = if sg.IgnoreGuiInset then 0 else inset.Y
-	return p.X, p.Y + top, s.X, s.Y
+	return p.X - o0.X, p.Y - o0.Y + top, s.X, s.Y
 end
 local function overlap(a, b)
 	local ix = math.min(a[1] + a[3], b[1] + b[3]) - math.max(a[1], b[1])
@@ -91,6 +98,7 @@ if #zones == 0 and UIS.TouchEnabled then
 end
 
 local buttons, nVisible, minText, minTarget = {}, 0, math.huge, math.huge
+local floorTarget = if UIS.TouchEnabled then CONFIG.MIN_TARGET_PX else CONFIG.MIN_MOUSE_TARGET_PX
 for _, sg in pg:GetChildren() do
 	if sg:IsA("ScreenGui") and sg.Enabled and sg ~= tg and sg.Name ~= "Freecam" then
 		if sg.ScreenInsets ~= Enum.ScreenInsets.CoreUISafeInsets and not sg.IgnoreGuiInset then
@@ -154,8 +162,8 @@ for _, sg in pg:GetChildren() do
 				if o:IsA("GuiButton") and o.Active then
 					local m = math.min(w, h)
 					minTarget = math.min(minTarget, m)
-					if m < CONFIG.MIN_TARGET_PX then
-						add("P2", "small-target", o, string.format("%dx%d px < %d", w, h, CONFIG.MIN_TARGET_PX))
+					if m < floorTarget then
+						add("P2", "small-target", o, string.format("%dx%d px < %d", w, h, floorTarget))
 					end
 					table.insert(buttons, { o = o, r = { x, y, w, h }, sg = sg })
 					for _, z in zones do
@@ -202,12 +210,16 @@ local report = HttpService:JSONEncode({
 	visible = nVisible,
 	buttons = #buttons,
 	minTextPx = if minText == math.huge then nil else math.floor(minText * 10) / 10,
-	minTargetPx = if minTarget == math.huge then nil else minTarget,
+	minTargetPx = if minTarget == math.huge then nil else math.floor(minTarget * 10) / 10,
+	targetFloorPx = floorTarget,
 	counts = counts,
 	findings = findings,
 })
-local ch = RS:WaitForChild("QA_Channel", 30)
+local ch = if CONFIG.CHANNEL_WAIT_S > 0
+	then RS:WaitForChild("QA_Channel", CONFIG.CHANNEL_WAIT_S)
+	else RS:FindFirstChild("QA_Channel")
 if ch then
-	ch:FireServer("UI-AUDIT", report)
+	ch:FireServer(CONFIG.TAG, report)
 end
-print("[qa] UI-AUDIT " .. report)
+print("[qa] " .. CONFIG.TAG .. " " .. report)
+return report -- execute_luau (built-in StudioMCP) returns this string directly

@@ -8,6 +8,11 @@ Allowed noise is filtered with --allow REGEX (repeatable), e.g. --allow '^\\[ana
 """
 import json, re, sys, argparse
 
+try:  # Windows consoles default to cp1252; Roblox logs carry UTF-8 (pt-BR, emoji)
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+except Exception:
+    pass
+
 RULES = [  # (severity, label, regex)
     ("P0", "script error", r"(?i)\b(error|exception)\b.*(script|:\d+:)|attempt to (index|call|perform|compare)|stack (begin|traceback)"),
     ("P1", "infinite yield", r"(?i)infinite yield possible"),
@@ -53,7 +58,8 @@ def main():
     c = {k: sum(h["severity"] == k for h in hits) for k in ("P0", "P1", "P2")}
     print(f"output-scan: P0 {c['P0']} · P1 {c['P1']} · P2 {c['P2']} (unique lines; --allow filters intended noise)")
     if a.json:
-        json.dump(hits, open(a.json, "w"), indent=1, ensure_ascii=False)
+        with open(a.json, "w", encoding="utf-8") as f:
+            json.dump(hits, f, indent=1, ensure_ascii=False)
     sys.exit(1 if c["P0"] or c["P1"] else 0)
 
 if __name__ == "__main__":
