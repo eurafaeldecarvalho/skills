@@ -10,8 +10,8 @@ iterations → FINAL PASS again). The FINAL PASS itself must come out with zero 
 ## 1. Build the exact release artifact
 Same commit, same `versionCode`, same signing as the upload to Play — never a debug or dev-client build.
 ```bash
-# Local (heavy — respect box reservations) or EAS (`eas build -p android --profile production`)
-cd android && ./gradlew bundleRelease          # → app/build/outputs/bundle/release/app-release.aab
+# Local (heavy — reserve the box first, see shared-machine.md) or EAS (`eas build -p android --profile production`)
+cd android && nice -n 10 ./gradlew bundleRelease --max-workers=2 -Dorg.gradle.jvmargs=-Xmx3g && ./gradlew --stop          # → app/build/outputs/bundle/release/app-release.aab
 # AAB → installable universal APK, signed with the upload key (keystore values from env/secret store, never printed)
 bundletool build-apks --bundle app-release.aab --output qa/final/app.apks --mode=universal \
   --ks "$UPLOAD_KS" --ks-key-alias "$UPLOAD_KS_ALIAS" \
@@ -42,7 +42,7 @@ echo no | avdmanager create avd -f -n final35 -k "system-images;android-35;googl
 echo no | avdmanager create avd -f -n final34s -k "system-images;android-34;google_apis_playstore;x86_64" -d "Nexus 4"
 # force the mid-range geometry (1080x2400 @ 420) on the pixel_6 AVDs
 for a in final34 final35; do printf 'hw.lcd.width=1080\nhw.lcd.height=2400\nhw.lcd.density=420\nhw.ramSize=4096\n' >> ~/.android/avd/$a.avd/config.ini; done
-emulator -avd final34 -no-window -no-audio -no-boot-anim -gpu swiftshader_indirect -wipe-data -no-snapshot -port 5554 &
+nice -n 10 emulator -avd final34 -memory 4096 -cores 4 -no-window -no-audio -no-boot-anim -gpu swiftshader_indirect -wipe-data -no-snapshot -port 5554 &
 export ANDROID_SERIAL=emulator-5554
 adb wait-for-device
 until [ "$(adb shell getprop sys.boot_completed | tr -d '\r')" = 1 ]; do sleep 2; done
@@ -51,7 +51,10 @@ adb shell wm size; adb shell wm density; adb shell getprop ro.build.version.rele
 ```
 `scripts/final-pass.sh` wraps these (`setup`, `boot <avd> [port]`, `install`, `update-prev` + `update`, `evidence`,
 `record`, `logscan`, `perf`, `stop`).
-Run on the box only in an allowed window; one emulator at a time if RAM < 16 GB.
+On a shared machine: book a slot and hold the lock first ([shared-machine.md](shared-machine.md));
+`final-pass.sh` refuses to `setup`/`boot` without it, caps the emulator at `-memory 4096 -cores 4` under
+`nice`/`ionice`, prefixes AVDs with your project, and `stop` kills only your emulator. One emulator per agent,
+so run the profiles one after another; if the slot ends, pause and resume in the next one.
 
 ## 3. Install — both ways
 | Case | Commands | Oracle |

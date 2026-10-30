@@ -9,6 +9,9 @@
 #   NAVS     default "gestural threebutton"  (system navigation mode; both are mandatory for the gate)
 #   SETTLE   seconds to wait after opening a screen (default 2)
 #   MAESTRO_LANG_FLOW optional Maestro flow to set the in-app language (receives -e LANG=<locale>)
+#   BOX_PROJECT (required) your reservation on the shared machine (box-reserve.sh); BOX_FORCE=1 skips the check
+#   Slot ending: when < MIN_LEFT (default 5) minutes remain, the sweep stops cleanly (exit 75); rerun with the
+#   same OUT in your next slot — finished configs (.done) are skipped, so it resumes where it stopped.
 # Output: $OUT/<theme>_<locale>_f<font>_<size>_<nav>/<screen>.png + .xml, $OUT/manifest.tsv, logcat-crash.txt
 set -euo pipefail
 : "${APP_ID:?set APP_ID}"; : "${SCREENS:?set SCREENS}"
@@ -18,16 +21,24 @@ FONTS="${FONTS:-1.0 1.3 2.0}"; SIZES="${SIZES:-default small}"; NAVS="${NAVS:-ge
 HERE="$(cd "$(dirname "$0")" && pwd)"; A="adb ${ADB_SERIAL:+-s $ADB_SERIAL}"
 mkdir -p "$OUT"; OUT="$(cd "$OUT" && pwd)"
 $A get-state >/dev/null || { echo "no device"; exit 1; }
+slot_left() { [ "${BOX_FORCE:-0}" = 1 ] && { echo 999; return; }; "$HERE/box-reserve.sh" left -p "${BOX_PROJECT:-}" -r emulator 2>/dev/null || echo 0; }
+if [ "${BOX_FORCE:-0}" != 1 ]; then
+  [ -n "${BOX_PROJECT:-}" ] || { echo "set BOX_PROJECT and reserve the box first (scripts/box-reserve.sh)"; exit 4; }
+  "$HERE/box-reserve.sh" check -p "$BOX_PROJECT" -r emulator || { echo "refusing: no valid emulator reservation"; exit 4; }
+fi
 "$HERE/adb-env.sh" save; trap '"$HERE/adb-env.sh" reset' EXIT
 "$HERE/adb-env.sh" anim off
 $A logcat -b crash -c || true
-printf "config\ttheme\tlocale\tfont\tsize\tscreen\tpng\txml\n" > "$OUT/manifest.tsv"
+[ -s "$OUT/manifest.tsv" ] || printf "config\ttheme\tlocale\tfont\tsize\tscreen\tpng\txml\n" > "$OUT/manifest.tsv"
 density() { $A shell wm density | tr -d '\r' | awk -F': ' '/Override/{o=$2} /Physical/{p=$2} END{print (o?o:p)}'; }
 
 bars() { $A shell dumpsys window | tr -d '\r' | grep -oE "type=$1 frame=\[-?[0-9]+,-?[0-9]+\]\[-?[0-9]+,-?[0-9]+\]" | grep -v '\[0,0\]\[0,0\]' | head -1 | sed -E 's/.*\[(-?[0-9]+),(-?[0-9]+)\]\[(-?[0-9]+),(-?[0-9]+)\]/\1,\2,\3,\4/' || true; }
 for nav in $NAVS; do "$HERE/adb-env.sh" nav "$nav" >/dev/null || echo "warn: nav overlay $nav not available"
 for theme in $THEMES; do for loc in $LOCALES; do for font in $FONTS; do for size in $SIZES; do
-  cfg="${theme}_${loc}_f${font}_${size}_${nav}"; dir="$OUT/$cfg"; mkdir -p "$dir"
+  cfg="${theme}_${loc}_f${font}_${size}_${nav}"; dir="$OUT/$cfg"
+  [ -e "$dir/.done" ] && { echo "== $cfg (done, skipped)"; continue; }
+  if [ "$(slot_left)" -lt "${MIN_LEFT:-5}" ]; then echo "slot ending — paused before $cfg; rerun with OUT=$OUT in your next slot"; echo "$cfg" > "$OUT/PAUSED"; exit 75; fi
+  rm -rf "$dir"; mkdir -p "$dir"; sed -i "/^${cfg}\t/d" "$OUT/manifest.tsv"   # redo a half-finished config cleanly
   echo "== $cfg"
   "$HERE/adb-env.sh" theme "$theme" >/dev/null
   "$HERE/adb-env.sh" font "$font"; "$HERE/adb-env.sh" size "$size"
@@ -53,6 +64,7 @@ for theme in $THEMES; do for loc in $LOCALES; do for font in $FONTS; do for size
       printf "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n" "$cfg" "$theme" "$loc" "$font" "$size" "$name" "$dir/$name.png" "$dir/$name.xml" >> "$OUT/manifest.tsv"
     done 3< "$SCREENS"
   fi
+  touch "$dir/.done"
 done; done; done; done; done
-$A logcat -b crash -d > "$OUT/logcat-crash.txt" || true
+rm -f "$OUT/PAUSED"; $A logcat -b crash -d > "$OUT/logcat-crash.txt" || true
 echo "done → $OUT  (next: python3 $HERE/sweep-check.py $OUT)"

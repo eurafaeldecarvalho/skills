@@ -61,7 +61,9 @@ Plus a findings table where every ID keeps its history (found in iter, fixed in 
 - Findings the agent cannot fix itself (needs owner decision, paid service, console access, a real
   device, another team's backend) are **Blocked**: listed with what's needed, never zeroed. While any
   finding is Blocked the loop cannot declare "zero".
-- Never claim a clean iteration that skipped a phase; a skipped phase = iteration invalid.
+- Never claim a clean iteration that skipped a phase; a skipped phase = iteration invalid. An iteration
+  paused because the machine slot ended resumes in the next slot ([shared-machine.md](shared-machine.md));
+  it counts only once every phase ran.
 - Never test against real users or production data to "get more coverage".
 
 ## Safety cap / escalation

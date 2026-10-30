@@ -56,6 +56,9 @@ functional-testing method and scripts are original. More sources in
   storage, clock/timezone, rotation, back spam, kill mid-write, clear data, permission revoke) and
   [`scripts/rls-probe.sh`](scripts/rls-probe.sh) (RLS/IDOR probe with an attacker's token; prints status
   and counts only).
+- **Shared machine:** [`scripts/box-reserve.sh`](scripts/box-reserve.sh) (`status` load + locks + slots,
+  `reserve` with overlap check, `acquire`/`check`/`left`/`release` lock; trap-friendly). Schedule:
+  `/home/box/shared/box-schedule.md`. `final-pass.sh` and `matrix-sweep.sh` refuse to run without a lock.
 - **FINAL PASS:** [`scripts/final-pass.sh`](scripts/final-pass.sh) (`setup` SDK images + AVDs, `boot` a clean
   headless emulator, `install` fresh, `update-prev` + `update` over the previous version, `evidence`/`record`
   screenshots and video, `logscan` crash/ANR/error/PII scan, `perf` gfxinfo/meminfo).
@@ -72,6 +75,7 @@ functional-testing method and scripts are original. More sources in
 
 | # | Pass | Goal | Output |
 |---|------|------|--------|
+| 0 | **Reserve the machine** (mandatory on a shared box) | Before any build, emulator, Maestro, sweep, red-team chaos or FINAL PASS: check load (`free -h`, `nproc`, `uptime`, heavy processes, `adb devices`), read the shared schedule, book a slot with `scripts/box-reserve.sh` (overlap → message the other agents and wait for an OK), hold the lock while running, release on exit even on failure. Caps: one emulator per agent (`-memory 4096 -cores 4`), Gradle `-Xmx3g --max-workers=2`, `nice`/`ionice`; shared SDK add-only; never kill others' processes; pause and resume in the next slot. → [reference/shared-machine.md](reference/shared-machine.md) | booked slot + lock |
 | 0 | **Context** | Write/refresh `APP-QA.md` (stack, locales, currencies, themes, min/target SDK, device targets, test accounts *names only*, backend envs, known-unfinished areas). | `APP-QA.md` |
 | 1 | **Inventory** | Read the code and list **every** screen, flow, form, button, permission, notification, deep link, backend call, background job and calculation, with roles and states. | `FEATURES.md` |
 | 1b | **Language research + copy** | Before translating or reviewing copy: research each target locale's format conventions (CLDR table, verified on device) and language (variant, register, everyday words), harvest the wording of top apps in the same category/market and the OS's own terms, write a per-locale glossary + tone guide, then translate/rewrite. | `qa/l10n/<locale>-glossary.md` + catalog changes |
@@ -100,6 +104,9 @@ Rules for running it:
 - **This skill drives fixing, not just reporting, and loops.** It ends only when the convergence loop exits
   (two consecutive clean full iterations, gate ✅) or the safety cap escalates with an explicit list of
   what blocks it and why. "Zero" means zero P0–P3 — nothing lowered, skipped or accepted without the owner.
+- **Be a good neighbour on a shared machine.** No heavy step without a booked slot and a live lock
+  (`box-reserve.sh`); stay inside the caps; stop your own emulators/daemons; never touch other agents'
+  processes or shared SDK components; when the slot ends, save state and resume in the next one.
 - **Finish on the real artifact.** Nothing ships on the strength of dev builds or code reading: the FINAL
   PASS installs the exact signed APK users will get and runs the real app; its findings send you back into
   the loop.
@@ -279,6 +286,8 @@ Ship (even to a closed test) only when all are true; otherwise report what's mis
       live flows, Maestro suite, sweep, red-team quick pass all green; `logscan` 0 crashes/ANRs/app errors;
       screenshots + video attached. Real-device install from the Play closed track done, or listed as Blocked.
 - [ ] Red-team: every S/C attack attempted in the last iteration on the Play test-track build; none succeeded.
+- [ ] Shared machine: every heavy run happened inside a booked slot with a live lock; locks released, own
+      emulators/Gradle daemons stopped, no shared SDK component removed or overwritten.
 - [ ] Clean checkout: types, lint, unit + integration tests green; release config checks pass.
 - [ ] Every `FEATURES.md` row has status ✅ with evidence (test name or run id); none "not tested".
 - [ ] Maestro suite green 3× in a row on the **release** build; two-account flows included.

@@ -8,6 +8,7 @@
 - Critical flows (money, permissions, destructive, legal): …
 - Build: release command, how to get an APK, signing (no secrets here)
 - Devices available: emulator AVDs, real phones (model, Android version, skin)
-- Constraints: machine reservations, budget (no paid services without approval)
+- Constraints: shared machine? → `BOX_PROJECT=<name>`, booked slots in `/home/box/shared/box-schedule.md`
+  (`scripts/box-reserve.sh`); budget (no paid services without approval)
 - Known issues / tester reports: link to bug list
 - Last QA run: date, build, gate result

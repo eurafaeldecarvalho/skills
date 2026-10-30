@@ -11,8 +11,8 @@ npx expo-doctor                       # dependency/SDK mismatches
 npx tsc --noEmit && npx eslint . && npm test
 npx expo config --type public | less  # final resolved app config (plugins, userInterfaceStyle, scheme, versions)
 npx expo prebuild --clean --platform android   # in a throwaway copy if the repo uses CNG
-# local release build (heavy; respect box reservations) or EAS:
-cd android && ./gradlew assembleRelease   # or bundleRelease → bundletool for an installable APK
+# local release build (heavy: reserve the box first → shared-machine.md) or EAS:
+cd android && nice -n 10 ./gradlew assembleRelease --max-workers=2 -Dorg.gradle.jvmargs=-Xmx3g && ./gradlew --stop   # or bundleRelease → bundletool for an installable APK
 eas build -p android --profile preview    # cloud alternative (check plan limits)
 ```
 AAB → APK for the emulator:

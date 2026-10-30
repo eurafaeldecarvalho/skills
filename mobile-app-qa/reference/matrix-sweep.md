@@ -7,13 +7,14 @@ export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:
 ls -l /dev/kvm                                   # hardware acceleration required
 sdkmanager "platform-tools" "emulator" "system-images;android-35;google_apis;x86_64"
 avdmanager create avd -n qa35 -k "system-images;android-35;google_apis;x86_64" -d pixel_6
-emulator -avd qa35 -no-window -no-audio -no-boot-anim -gpu swiftshader_indirect -no-snapshot-save &
+nice -n 10 emulator -avd qa35 -memory 4096 -cores 4 -no-window -no-audio -no-boot-anim -gpu swiftshader_indirect -no-snapshot-save &
 adb wait-for-device; until [ "$(adb shell getprop sys.boot_completed | tr -d '\r')" = 1 ]; do sleep 2; done
 adb install -r app-release.apk                   # release build (bundletool if you have an AAB)
 for s in window_animation_scale transition_animation_scale animator_duration_scale; do adb shell settings put global $s 0; done
 curl -fsSL https://get.maestro.mobile.dev | bash # Maestro (Java 17)
 ```
-Check reservations/load before booting an emulator on a shared machine. A `google_apis` image allows
+On a shared machine reserve first and cap the emulator (`-memory 4096 -cores 4`, one per agent) →
+[shared-machine.md](shared-machine.md). A `google_apis` image allows
 `adb root` (system locale via `setprop persist.sys.locale` + `stop; start`); per-app locale needs no root.
 
 ## Toggles (all restorable — `scripts/adb-env.sh`)
