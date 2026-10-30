@@ -32,6 +32,12 @@ A collection of Claude skills. Each skill lives in its own folder with a `SKILL.
 > silhouette, flat/parallax; `-3d` = lighting, materials/shaders, low-poly modeling, 3D camera).
 > `game-feel` and `game-polish` are dimension-agnostic, so they have no suffix.
 
+**Once it's built** — getting it found and spreading:
+
+| Skill | What it does | Scope |
+|-------|--------------|-------|
+| [`play-store-aso-growth/`](play-store-aso-growth/) | The **Google Play ASO + growth playbook**: how Play search and ranking work (what gets indexed, keyword density, relevance vs. quality signals), a listing checklist (title/short/full description, icon, screenshots), custom store listings and A/B experiments, ratings via the In-App Review API, the Android vitals and core-value thresholds that cut visibility, the 12-tester/14-day closed test → production launch plan, invite/share loops with Install Referrer, cross-channel and paid (Google Ads) options, and the policy traps that get apps removed. Every rule tagged as Google-sourced fact or industry heuristic; costs flagged. Ships with a fill-in listing template. | Android apps (Google Play) |
+
 ## Install a skill (Claude Code)
 
 Copy the skill folder into your skills directory:
