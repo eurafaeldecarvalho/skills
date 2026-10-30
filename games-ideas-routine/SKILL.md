@@ -10,7 +10,7 @@ description: >-
   state in SQLite with database-enforced guards, validates by measuring player behavior (free portal
   playtests → Steam page/demo → paid tests only when they buy a real sample), picks the engine per idea,
   and every number carries a source. Goal is a portfolio with net R$/hour, not MRR. For a one-off
-  go/no-go on a single concept use `concept-gate`; once building, use `game-feel`, `game-taste-2d`,
+  go/no-go on a single concept, validate it directly with a quick playtest; once building, use `game-feel`, `game-taste-2d`,
   `game-taste-3d` and `game-polish`.
 ---
 
@@ -960,8 +960,8 @@ that penalty fails the minimum, so archive the idea before the test):
 **Tie-break:** 1) track W; 2) higher Twist; 3) fewer hours; 4) genre with an own game already `lancada` (reuse code
 and learning).
 
-**Relation to `concept-gate`:** that skill gates for virality and fails solo loops; this routine gates for measured
-play and money. Here a solo game with a shareable artifact is fine (it gets +1), because the test, not the rubric,
+**Gates on measured play, not virality:** this routine gates for measured play and money rather than for
+shareability alone. Here a solo game with a shareable artifact is fine (it gets +1), because the test, not the rubric,
 decides.
 
 ---

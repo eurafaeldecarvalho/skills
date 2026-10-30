@@ -13,8 +13,8 @@ description: >-
   when planning an update, event, creator outreach or ad test, and whenever the user asks how to make a
   Roblox game viral or popular. Scores readiness 0-4, ends with a growth gate (no paid or influencer push
   before the game keeps players), tags every claim [ROBLOX] / [DATA] / [CASE] / [HEURISTIC], and flags
-  anything that spends money or needs the owner's approval. Run `concept-gate` before building and
-  `roblox-game-qa` before publishing; this skill starts where they stop.
+  anything that spends money or needs the owner's approval. Validate the concept before building and run
+  `roblox-game-qa` before publishing; this skill starts where those stop.
 ---
 
 # Roblox game growth (find → click → stay → return → bring a friend)
@@ -113,7 +113,7 @@ Rules for running it:
 
 | Dimension | What "4" looks like |
 |---|---|
-| **1. Spreadable concept** | The game is explainable in one line, has a visible "clip" moment, a familiar base with one fresh twist, and is more fun with a friend (`concept-gate`). |
+| **1. Spreadable concept** | The game is explainable in one line, has a visible "clip" moment, a familiar base with one fresh twist, and is more fun with a friend (validate the concept before building). |
 | **2. First 60 seconds** | Spawn → first meaningful action in ≤ ~30 s, first win/scare/laugh in ≤ ~60 s, controls taught by doing, works on a phone in landscape. Low first-play bounce. |
 | **3. Return loop** | Short/mid/long goals visible, something "about to pop" tomorrow (unlocks, collections, daily/weekly content), progress shown on rejoin. Healthy D1/D7 vs benchmark. |
 | **4. Social / co-play** | Inviting a friend is the obvious best path: invite prompt at the right moment, join-friend works, party/private-server play, referral reward, roles that need two people. |

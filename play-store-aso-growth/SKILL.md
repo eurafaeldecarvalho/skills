@@ -10,7 +10,7 @@ description: >-
   keywords, writing a title/short/full description, planning screenshots or an A/B test, designing a
   referral or invite loop, deciding whether to pay for Google Ads App campaigns, or checking a listing for
   policy risks before submitting. Every rule is tagged [FACT] (with a Google source) or [HEURISTIC]
-  (industry practice). For deciding whether a concept can spread at all, run `concept-gate` first.
+  (industry practice). Validate first that the concept has a reason to spread; ASO only amplifies demand.
 ---
 
 # Play Store ASO + growth (find → convert → keep → spread)
@@ -45,7 +45,7 @@ Facts verified on **2026-10-29**. Play changes often; re-check thresholds and li
 
 ## 0. Order of work (do not skip ahead)
 
-1. **Concept has a reason to spread** (run `concept-gate`). ASO cannot fix an app nobody needs.
+1. **Concept has a reason to spread** (validate the concept first). ASO cannot fix an app nobody needs.
 2. **Quality floor**: no crash/ANR above the bad-behavior thresholds (section 5). Bad vitals cap everything else.
 3. **Listing that converts** (sections 1-3): keywords in the right fields, icon + screenshots that sell.
 4. **Closed test → production** (section 6), collecting the first honest ratings.

@@ -8,8 +8,8 @@ description: >-
   owner asks why an idea was killed/archived, or when calibrating the funnel. It starts from who already
   pays (not from viral trends), keeps all state in SQLite with database-enforced guards, validates without
   talking to users (public data → fake-door landing → paid test → real checkout → paywalled MVP), and every
-  number carries a source. It replaces ad-hoc idea brainstorming; for a one-off go/no-go on a single game or
-  app concept use `concept-gate` instead.
+  number carries a source. It replaces ad-hoc idea brainstorming; it is not meant for a one-off go/no-go on a
+  single game or app concept.
 ---
 
 # App ideas routine (search → validation → build proposal)

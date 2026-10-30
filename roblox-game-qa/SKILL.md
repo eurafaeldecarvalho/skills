@@ -63,7 +63,7 @@ Rules for running it:
 - **See it running.** Static reading cannot judge touch targets, prompt overlap, darkness or pacing.
 - **Fix in severity order, one change at a time**, re-test after each; never one giant "QA fixes" commit.
 - **Narrow targets beat whole-game glances.** "Critique the shift-end screen on a small phone" finds more than "review the game".
-- **Polish preserves.** If the core loop is not fun, say so and stop polishing; route to `concept-gate` / redesign.
+- **Polish preserves.** If the core loop is not fun, say so and stop polishing; send it back to concept validation / redesign.
 - Read [reference/anti-patterns.md](reference/anti-patterns.md) before the first fix; it lists the Roblox mistakes no linter catches.
 
 ## Severity (blocker → polish)
