@@ -17,8 +17,21 @@ Free reach: Play pre-launch report runs on several real devices; Firebase Test L
 ## Edge-to-edge and insets (SDK 54+/Android 15+ = always edge-to-edge)
 - Use `react-native-safe-area-context` (`SafeAreaView edges` / `useSafeAreaInsets`) on every screen root,
   headers, bottom bars, FABs, sheets, toasts/banners, modals.
-- Test 3-button nav **and** gesture nav (`adb shell cmd overlay enable com.android.internal.systemui.navbar.threebutton`
-  / `...gestural`), display cutouts, status bar icon contrast in both themes.
+- **Every screen in 3-button nav AND gesture nav is a P1 gate item** (`adb shell cmd overlay enable
+  com.android.internal.systemui.navbar.threebutton` / `...gestural`, or `scripts/adb-env.sh nav
+  threebutton|gestural`; the sweep's `NAVS` does both). Nothing interactive or meaningful may sit under
+  the navigation bar or the gesture handle: bottom tab bar, bottom buttons/footers, FABs, snackbars,
+  bottom sheets, modals, the keyboard's accessory/submit row. Also display cutouts and status bar icon
+  contrast in both themes.
+- Detector: `scripts/adb-env.sh bars` prints the system bar frames (`dumpsys window` → `navigationBars`,
+  `statusBars`); the sweep stores them in `env.txt` and `sweep-check.py` flags **`nav-overlap` /
+  `status-overlap` (P1)** when a clickable or text node's bounds intersect a bar by ≥ 6 dp. It cannot see
+  overlaps drawn inside one big view (e.g. a canvas) — the contact sheet review still applies.
+- Android 15+ (targetSdk 35+) forces edge-to-edge and Android 16 removes the opt-out; Expo SDK 54+ is
+  always edge-to-edge. Bars over app content are therefore the default, not an edge case.
+- Common RN causes: fixed `paddingBottom` on tab bars, `position: 'absolute', bottom: 0` without
+  `insets.bottom`, `SafeAreaView` from `react-native` (iOS-only) instead of
+  `react-native-safe-area-context`, modals/sheets rendered outside the `SafeAreaProvider` tree.
 - Banners/toasts at the top must sit below the status bar and not cover the header actions.
 
 ## Keyboard

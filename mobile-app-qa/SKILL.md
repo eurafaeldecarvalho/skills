@@ -1,20 +1,16 @@
 ---
 name: mobile-app-qa
 description: >-
-  A rigorous find → fix → re-verify QA pass that leaves a mobile app (Expo / React Native + TypeScript,
-  Android first, iOS later; also useful for any Android app) working impeccably in BOTH appearance and
-  every feature. Use it BEFORE any store release or closed/open test build, AFTER tester reports or a
-  Play pre-launch report, when the app "works on my phone" but breaks on someone else's (dark mode,
-  another language, big font, another Android brand), and whenever the user asks to test, QA, harden,
-  polish or "make everything work perfectly" in a mobile app. It builds a feature inventory from the
-  code, tests every feature end to end (happy path, edge cases, failures; two-account flows; offline and
-  sync), runs a mandatory LIVE pass (real accounts, emails, DB checks, FCM push, two devices, cleanup), runs an automated adb + Maestro matrix sweep (light/dark × every locale × font scale × screen
-  size) with screenshot and UI-text detectors, researches each locale's format conventions (CLDR,
-  verified on device) and real everyday/app vocabulary before translating, audits theming, localization
-  and money/date formatting,
-  layout/insets, accessibility, resilience, performance and release-build config, scores 11 dimensions
-  0-4, ranks findings P0-P3, drives the fix loop and ends with a release gate (no P0/P1, real device,
-  real testers). Method adapted from Impeccable (pbakaus/impeccable).
+  Find → fix → re-verify QA that leaves a mobile app (Expo/React Native, Android first) working and
+  looking right. Use BEFORE a store or test-track release, AFTER tester or Play
+  pre-launch reports, when it "works on my phone" but breaks elsewhere (dark mode, other language, big
+  font, 3-button nav, another brand), or when asked to test, QA, harden or break a mobile app. Builds a
+  feature inventory, runs functional E2E, a LIVE pass (real accounts, email, DB, push, two devices), an
+  adb + Maestro matrix sweep (theme × locale × font × size × nav mode) with detectors (incl. controls
+  under the system bars), locale/translation research, a mandatory RED-TEAM pass every iteration (chaos,
+  fuzz, RLS/IDOR, role escalation, invite abuse, injection, tampering, PII leaks), scores 12 dimensions
+  0-4, ranks P0-P3, loops until two consecutive full iterations find zero findings, then runs a FINAL
+  PASS on the signed release APK installed on clean emulators (fresh + update) and gates the release. Adapted from Impeccable.
 ---
 
 # Mobile app QA (the "impeccable" pass for phones — looks AND works)
@@ -52,12 +48,20 @@ functional-testing method and scripts are original. More sources in
 - **This skill's scripts:** [`scripts/matrix-sweep.sh`](scripts/matrix-sweep.sh) (config matrix ×
   screens → screenshots + UI dumps), [`scripts/sweep-check.py`](scripts/sweep-check.py) (detectors:
   black/blank screens, wrong money/number format per locale, raw i18n keys, `undefined`/`NaN`,
-  untranslated English, invisible/low-contrast text, small touch targets, stuck banners),
+  untranslated English, invisible/low-contrast text, small touch targets, stuck banners, controls under
+  the system navigation/status bar),
   [`scripts/adb-env.sh`](scripts/adb-env.sh) (one-line device
   state toggles + reset).
+- **Red-team:** [`scripts/red-team-chaos.sh`](scripts/red-team-chaos.sh) (seeded monkey, trim-memory, low
+  storage, clock/timezone, rotation, back spam, kill mid-write, clear data, permission revoke) and
+  [`scripts/rls-probe.sh`](scripts/rls-probe.sh) (RLS/IDOR probe with an attacker's token; prints status
+  and counts only).
+- **FINAL PASS:** [`scripts/final-pass.sh`](scripts/final-pass.sh) (`setup` SDK images + AVDs, `boot` a clean
+  headless emulator, `install` fresh, `update-prev` + `update` over the previous version, `evidence`/`record`
+  screenshots and video, `logscan` crash/ANR/error/PII scan, `perf` gfxinfo/meminfo).
 - **Templates:** [`templates/`](templates/) — `APP-QA.md` context file, `FEATURES.md` inventory,
   `glossary-template.md` (per-locale conventions + glossary + tone guide), Maestro config/flows/subflows
-  (smoke, pt-BR money input, offline banner recovery, screen sweep, two-account invite), report + tester
+  (smoke, pt-BR money input, offline banner recovery, screen sweep, two-account invite, red-team inputs), report with iteration ledger + tester
   bug template.
 - **Cloud (free tiers, optional):** Google Play **pre-launch report** (runs automatically on
   closed/open test uploads), Firebase Test Lab Spark (10 virtual + 5 physical runs/day; service is
@@ -74,12 +78,14 @@ functional-testing method and scripts are original. More sources in
 | 2 | **Audit** (code + build) | Everything measurable without a person: types, lint, unit/integration tests, release config, theming tokens, i18n catalog, formatting helpers, RLS/security, dead flags. | scored findings |
 | 3 | **Functional E2E** | Every inventory row: happy path + edge + failure, automated with Maestro where possible; two-account flows; data correctness checked against an oracle. | findings + flows |
 | 3b | **Live E2E** (mandatory) | Real backend, real tagged accounts (`qa+<run>@…`), real emails in a real inbox (arrival, spam, SPF/DKIM, links), real DB rows checked with SQL, RLS between real accounts, real FCM push on devices (fg/bg/killed), two devices for multi-user, uploads, test-mode billing, account deletion, then verified cleanup. Never touches real users' data; never prints secrets. | live evidence + cleanup log |
-| 4 | **Matrix sweep** | Every screen × light/dark × every locale × font scale × screen size on the release build; detectors + human review of the contact sheet. | findings + screenshots |
+| 4 | **Matrix sweep** | Every screen × light/dark × every locale × font scale × screen size × 3-button/gesture nav on the release build; detectors + human review of the contact sheet. | findings + screenshots |
 | 5 | **Harden** | Offline/slow/flaky network, process death, permissions denied, background/foreground, push, deep links, extreme data, clock/timezone, upgrades. | findings |
 | 6 | **Critique** (look & UX) | Use the app like a first-time user on a real phone; judge hierarchy, clarity, feedback, consistency, platform conformance (Material 3 on Android). | findings |
-| 7 | **Fix loop** | Fix in severity order, one change at a time; each fix gets a regression test and is re-verified in the exact config that failed. Repeat 2-6 on the touched areas until the gate passes. | commits + bug log |
-| 8 | **Gate + release** | Run the release gate on a clean release build; upload to the test track; read the pre-launch report; smoke-test the store-installed build on a real phone. | gate report |
-| 9 | **Feedback loop** | Every tester report → reproduce → bug → fix → regression test → re-verify on the failing device class; new bug classes go into the anti-pattern catalog. | bug log |
+| 6b | **RED-TEAM** (mandatory, every iteration) | Act as attacker and hostile user: chaos (monkey with seeds, fuzz/adversarial inputs, double taps, kill/airplane mid-write, trim-memory, low storage, clock/DST, rotation, permission revoke, two users editing the same record, expired session) **and** security abuse (RLS/IDOR across spaces, privilege escalation between co-parents, invite abuse, RPC/storage/realtime access, tampered requests, injection, auth abuse, deep-link injection, APK secrets, PII in logs, consent). Every successful attack is a finding. → [reference/red-team.md](reference/red-team.md) | `qa/red-team/<iter>/` |
+| 7 | **Convergence loop** | Fix in severity order (failing regression test first, one commit per finding), then re-run the **FULL** pass 2–6b plus all regression tests; repeat until **two consecutive full iterations have zero findings of any severity** (the second with fresh seeds/inputs). Iteration ledger, anti-cheating rules, safety cap → [reference/convergence-loop.md](reference/convergence-loop.md) | ledger + commits |
+| 7b | **FINAL PASS** (mandatory) | After the loop exits: build the signed release artifact (AAB → `bundletool build-apks --mode=universal` with the upload key, or a release APK), `adb install` it on **clean emulators** (headless Linux; Android 14 and 15/16, Play Store image, mid-range 1080×2400 and a small-screen profile) as a **fresh install AND an update over the previous version**, then run the real app end to end: full feature walkthrough, live backend flows, whole Maestro suite, matrix sweep, red-team quick pass, logcat `*:E`/crash/ANR scan, `dumpsys gfxinfo`, screenshots + `screenrecord` video. Preferably also install from the Play closed-test track on a real phone. **Any finding restarts the loop.** → [reference/final-pass.md](reference/final-pass.md) | `qa/final/` evidence |
+| 8 | **Gate + release** | Only after the loop exits and the FINAL PASS is clean: run the release gate; upload to the test track; read the pre-launch report; smoke-test the store-installed build on a real phone. | gate report |
+| 9 | **Feedback loop** | Every tester report → reproduce → finding → back into the convergence loop (full pass, two clean iterations) → new bug classes go into the anti-pattern catalog and the red-team corpus. | bug log |
 
 Rules for running it:
 - **Run Audit, Functional E2E and Critique independently.** With sub-agents, give each its own context
@@ -91,18 +97,26 @@ Rules for running it:
   same flow runs in every language. Missing `testID`s are findings.
 - **Fix in severity order, one change at a time**; never one giant "QA fixes" commit; never polish
   visuals while a P0/P1 is open.
-- **This skill drives fixing, not just reporting.** The pass ends only at a passing gate or with an
-  explicit list of what blocks it and why.
+- **This skill drives fixing, not just reporting, and loops.** It ends only when the convergence loop exits
+  (two consecutive clean full iterations, gate ✅) or the safety cap escalates with an explicit list of
+  what blocks it and why. "Zero" means zero P0–P3 — nothing lowered, skipped or accepted without the owner.
+- **Finish on the real artifact.** Nothing ships on the strength of dev builds or code reading: the FINAL
+  PASS installs the exact signed APK users will get and runs the real app; its findings send you back into
+  the loop.
+- **Test AND try to break.** Confirming the happy path is half the job; the red-team phase runs in every
+  iteration with new seeds and its own findings count toward zero.
 - Read [reference/anti-patterns.md](reference/anti-patterns.md) before the first fix.
 
 ## Severity (blocker → polish)
 - **P0 Blocker** — crash/ANR, data loss or **wrong data** (wrong total, wrong split, value saved in the
   wrong unit/scale), a feature that cannot be completed, a screen unreadable in a supported config
-  (e.g. black screen in dark mode), privacy/security leak (other family's data), store-policy violation,
+  (e.g. black screen in dark mode), privacy/security leak (other family's data, RLS/IDOR, privilege
+  escalation, secret in the APK, PII in logs/analytics), any successful red-team attack on data or auth, store-policy violation,
   sign-in/sign-up impossible. Fix now; blocks release.
 - **P1 Major** — a large share of users will struggle or distrust the app: wrong number/date/currency
   format for the chosen language, untranslated strings, banner/toast that never goes away, text clipped
-  at font scale 1.3, keyboard covering the submit button, TalkBack can't reach a primary action,
+  at font scale 1.3, keyboard covering the submit button, **system navigation/status bar covering app
+  controls (3-button or gesture nav)**, TalkBack can't reach a primary action,
   offline edits silently lost on restart, broken back gesture. Fix before release.
 - **P2 Minor** — annoyance with a workaround: inconsistent spacing, a missing empty state illustration,
   slow-but-working screen, minor contrast miss on secondary text. Next pass.
@@ -127,7 +141,8 @@ excellent, verified on a real device in every supported config.
 | 8 | Resilience & lifecycle (network, process death, permissions, push, links) | — (≥3) |
 | 9 | Performance & stability (startup, jank, memory, ANR) | — (≥3) |
 | 10 | Store & compliance (Play policies, data safety, account deletion) | — (≥3) |
-| 11 | Feedback loop (bug log, regression tests) | — (≥3) |
+| 11 | Feedback loop (bug log, regression tests, iteration ledger) | — (≥3) |
+| 12 | **Security & abuse resistance** (red-team: RLS/IDOR, roles, invites, injection, tampering, PII, chaos) | **yes** |
 
 ---
 
@@ -156,7 +171,11 @@ excellent, verified on a real device in every supported config.
 - [ ] Offline create/edit/delete → kill app → reopen → still there → reconnect → synced once (no dupes), conflict rule visible and correct.
 - [ ] Supabase RLS: user B cannot read/write family A's rows (tests with two JWTs or pgTAP); storage buckets private where needed; signed URLs expire.
 - [ ] Every "syncing/offline" state has a **recovery path** (retry timer or user action) and clears itself when the condition ends.
-- [ ] Migrations of local storage across app versions (install old build → create data → upgrade → data intact).
+- [ ] **Upgrade path:** install the previous production build (from Play or its APK) → create data in every feature, including queued offline writes → update over it (`adb install -r` and via the Play test track) → data intact, migrations ran once, still signed in, outbox flushed.
+- [ ] **Old client vs new backend:** the previous app version keeps working (or is force-updated cleanly) after this release's DB migrations/Edge Functions deploy — run its smoke flow against staging after migrating.
+- [ ] Multi-device concurrency: same record edited on A and B at the same time (online and both offline) → documented conflict rule, no silent loss, both converge.
+- [ ] Token lifecycle: access-token expiry, refresh-token revoked, password changed elsewhere, removed from the space → handled without data loss or loops; server cuts access immediately.
+- [ ] No PII/tokens in logcat, crash reports or analytics events (grep with distinctive QA values); analytics/crash SDKs respect consent; tokens in SecureStore, not AsyncStorage; logout wipes local user data.
 
 **Live (pass 3b) → [reference/live-e2e.md](reference/live-e2e.md):**
 - [ ] Every live flow L1–L14 that applies passes against the production-like backend with tagged QA accounts: sign-up/login/reset with emails really delivered (inbox not spam, localized, links/App Links open the app, SPF/DKIM/DMARC pass), DB rows verified by SQL, RLS isolation with a third account, invites + realtime between two devices, uploads, FCM push in foreground/background/killed opening the right screen, test-mode billing, account/data deletion.
@@ -189,7 +208,8 @@ excellent, verified on a real device in every supported config.
 
 ### 6. Layout & adaptivity → [reference/devices-and-layout.md](reference/devices-and-layout.md)
 - [ ] Sweep at font scale **1.0 / 1.3 / 2.0** and display size small/large; nothing clipped, overlapping or unreachable (scroll exists).
-- [ ] Edge-to-edge (mandatory on Android 16; default since Expo SDK 54): content not under status bar, camera cutout, gesture bar or 3-button nav; `react-native-safe-area-context` insets used everywhere, including modals/sheets.
+- [ ] **System bars never cover the app (P1 gate item):** every screen swept in **both 3-button and gesture navigation** (`scripts/adb-env.sh nav threebutton|gestural`; sweep `NAVS`), edge-to-edge on Android 15+ (forced on Android 16; always on Expo SDK 54+). Bottom tab bar, bottom buttons/footers, FABs, snackbars, sheets, modals and the keyboard's submit row sit above the nav bar/gesture handle; headers and top banners below the status bar and cutout. `nav-overlap`/`status-overlap` detectors clean; `react-native-safe-area-context` insets everywhere (no fixed bottom padding).
+- [ ] Keyboard open in both nav modes: focused input and submit visible, no double inset (keyboard + nav inset) gap.
 - [ ] Keyboard never covers the focused input or the submit button (test small screen + font 1.3 + gesture nav).
 - [ ] Small phone (≈360×640 dp) and large phone/tablet/landscape (if supported) both usable.
 
@@ -197,6 +217,7 @@ excellent, verified on a real device in every supported config.
 - [ ] TalkBack: every control has a role + label + state, logical order, no traps, banners announced (`accessibilityLiveRegion`), focus moves on navigation.
 - [ ] Touch targets ≥ 48×48 dp with spacing; contrast ≥ 4.5:1 text / 3:1 UI in both themes; no meaning by color alone.
 - [ ] Accessibility Scanner (free app) run on key screens; pre-launch report accessibility warnings triaged.
+- [ ] TalkBack actually exercised: core flows completed with TalkBack on (enable on a Play image: `adb shell settings put secure enabled_accessibility_services com.google.android.marvin.talkback/com.google.android.marvin.talkback.TalkBackService` + `settings put secure accessibility_enabled 1`; turn off after) in pt-BR and en, light and dark; labels are localized.
 
 ### 8. Resilience & lifecycle → [reference/resilience-and-performance.md](reference/resilience-and-performance.md)
 - [ ] Airplane mode, slow (EDGE/GPRS) and flaky network on every write action; timeouts show a retry, never an infinite spinner.
@@ -204,7 +225,9 @@ excellent, verified on a real device in every supported config.
 - [ ] Permissions: allow, deny, deny forever, revoke in Settings while running (camera/photos/notifications).
 - [ ] Push notifications: permission flow on Android 13+, tap opens the right screen (cold + warm start), no duplicates.
 - [ ] Deep links / invite links: cold start, warm start, logged out (resumes after login), invalid/expired link.
-- [ ] Device clock/timezone change, DST day, year boundary.
+- [ ] Device clock/timezone change while the app is open, DST gap/overlap days in the user's zone, leap day, year boundary; two users in different timezones see the same date for the same event.
+- [ ] Low storage (`cmd devicestoragemonitor force-low`), low memory (`am send-trim-memory`), battery saver, OEM background-kill: no corrupted local data, clear messages.
+- [ ] App update over an installed build while offline writes are pending; reinstall; `pm clear`.
 
 ### 9. Performance & stability → [reference/resilience-and-performance.md](reference/resilience-and-performance.md#performance)
 - [ ] Cold start to interactive ≤ ~2 s on the mid-range target (release); lists virtualized; no jank in scroll (gfxinfo janky frames < ~5%).
@@ -220,6 +243,11 @@ excellent, verified on a real device in every supported config.
 - [ ] Each tester report logged with the bug template, reproduced in the **same config** (device class, theme, locale, font scale) or marked "cannot reproduce" with what was tried.
 - [ ] Fix → regression test (unit, Maestro flow or sweep detector) → re-verified in the failing config → anti-pattern catalog updated if the class is new.
 
+### 12. Security & abuse (RED-TEAM) → [reference/red-team.md](reference/red-team.md)
+- [ ] Every attack S1–S16 run with three QA accounts (owner A, co-parent B, stranger C) on staging via [`scripts/rls-probe.sh`](scripts/rls-probe.sh) and manual requests; every table, view, RPC, bucket and realtime channel in the inventory covered.
+- [ ] Chaos C1–C12 run with new seeds this iteration ([`scripts/red-team-chaos.sh`](scripts/red-team-chaos.sh), Maestro [`red-team-inputs.yaml`](templates/maestro/flows/red-team-inputs.yaml) pattern on every input); seeds recorded.
+- [ ] Every successful attack → finding (security/data = P0) → failing test/probe first → fix → probe added to the permanent suite.
+
 ---
 
 ## Matrix sweep (pass 4) in one screen
@@ -228,6 +256,7 @@ Full recipe and caveats in [reference/matrix-sweep.md](reference/matrix-sweep.md
 # release APK installed on a booted emulator; screens.txt = name|deeplink or a Maestro sweep flow
 APP_ID=com.example.app SCREENS=qa/screens.txt OUT=qa/sweep/$(date +%F-%H%M) \
 LOCALES="en-US pt-BR es-419 pt-PT" THEMES="light dark" FONTS="1.0 1.3 2.0" SIZES="default small" \
+NAVS="gestural threebutton" \
   mobile-app-qa/scripts/matrix-sweep.sh
 python3 mobile-app-qa/scripts/sweep-check.py qa/sweep/<run>   # → findings.md + contact sheet
 ```
@@ -239,9 +268,17 @@ dark-mode and pt-BR screenshot** — a detector result is evidence, not proof.
 
 ## Release gate (definition of done)
 Ship (even to a closed test) only when all are true; otherwise report what's missing:
-- [ ] **Zero open P0 and P1.** (P1 may be accepted only by the owner, in writing, with a reason.)
+- [ ] **Convergence loop exited:** two consecutive FULL iterations (all phases incl. live and red-team) with
+      **zero findings of any severity**, the second with fresh seeds/inputs; ledger in the report; no Blocked
+      items. (Anything the owner explicitly accepted in writing is listed as "accepted, not zero".)
 - [ ] Scores ≥3 everywhere and **4** on Functional correctness, Data/sync/security, Appearance & theming,
-      Localization & formatting.
+      Localization & formatting, Security & abuse resistance.
+- [ ] **FINAL PASS clean** ([reference/final-pass.md](reference/final-pass.md)): signed release APK (same
+      commit/versionCode/key as the upload) installed with `adb install` on clean emulators (Android 14 + 15/16,
+      mid-range + small screen) as fresh install **and** update over the previous version; feature walkthrough,
+      live flows, Maestro suite, sweep, red-team quick pass all green; `logscan` 0 crashes/ANRs/app errors;
+      screenshots + video attached. Real-device install from the Play closed track done, or listed as Blocked.
+- [ ] Red-team: every S/C attack attempted in the last iteration on the Play test-track build; none succeeded.
 - [ ] Clean checkout: types, lint, unit + integration tests green; release config checks pass.
 - [ ] Every `FEATURES.md` row has status ✅ with evidence (test name or run id); none "not tested".
 - [ ] Maestro suite green 3× in a row on the **release** build; two-account flows included.
@@ -250,8 +287,10 @@ Ship (even to a closed test) only when all are true; otherwise report what's mis
 - [ ] Locale conventions: table per shipped locale, every convention test green in Node **and** on the device (Hermes).
 - [ ] Translation quality: research + glossary + tone guide per shipped locale; every string reviewed **in context on screenshots**; zero P0/P1 copy findings (wrong variant, wrong register, calque, untranslated, truncated, wrong plural/gender); a native speaker per locale signed off or is listed under "Untested".
 - [ ] **Live E2E pass green on the release build installed from the Play test track** (real accounts, emails, DB checks, push, two devices, deletion) with cleanup verified → [reference/live-e2e.md](reference/live-e2e.md).
-- [ ] Real low/mid Android phone: full main flow in **dark + pt-BR + font 1.3 + gesture nav**, and in
-      light + en-US.
+- [ ] **Insets (P1):** every screen in **3-button and gesture navigation**, edge-to-edge, no control or text
+      under the system bars (`nav-overlap`/`status-overlap` clean + contact sheet reviewed), keyboard cases included.
+- [ ] Real low/mid Android phone: full main flow in **dark + pt-BR + font 1.3 + gesture nav** and again in
+      **3-button nav**, and in light + en-US.
 - [ ] Pre-launch report: no crashes/ANRs; warnings triaged.
 - [ ] ≥2 real testers who didn't build it completed the core flows without help; reports logged.
 - [ ] Post-upload smoke test of the **store-installed** build on a real phone.
@@ -268,7 +307,7 @@ P1 — [Localization] Expense amount shows US format in pt-BR
   Verified: emulator sweep + real phone, same config
 ```
 **Tester report → bug:** see [templates/report-template.md](templates/report-template.md).
-**End of pass:** dimension scores table, counts by severity, top 3 fixes, gate checklist ✅/❌, and an
+**End of pass:** iteration ledger, FINAL PASS results per emulator profile (install/update, logscan, perf, evidence links), dimension scores table, counts by severity, red-team attempts/successes, top 3 fixes, gate checklist ✅/❌, and an
 explicit **"Untested:"** line (devices, locales, flows, OS versions you could not check).
 
 ## Lessons from real tester bugs (EvenKeel closed test, Moto G73 5G)
@@ -287,7 +326,10 @@ Full analysis and the regression tests they produced: [reference/case-evenkeel.m
 4. **"The translations aren't good."** Strings were translated before anyone studied how Brazilians,
    Portuguese and Latin Americans actually talk in apps. → Research + glossary + in-context review is a
    gate item ([reference/translation-quality.md](reference/translation-quality.md)).
-5. Tester found the first three in minutes on one phone — the gate's "real mid-range Android, dark + pt-BR +
+5. **"The Android navigation bar covers the app's buttons."** Expo SDK 54+ draws edge-to-edge on every
+   Android version, but the bottom tab bar used a fixed bottom padding instead of the safe-area inset. →
+   Every screen in 3-button **and** gesture nav, `nav-overlap` detector, insets on every bottom element.
+6. Testers found these in minutes on one phone — the gate's "real mid-range Android, dark + pt-BR +
    font 1.3" line exists because of this.
 
 ## Anti-patterns of the QA itself
@@ -299,4 +341,7 @@ Full analysis and the regression tests they produced: [reference/case-evenkeel.m
 - Fixing a reported bug without reproducing it in the reporter's config, or without a regression test.
 - Testing multi-user features with one account.
 - Polishing visuals while a P0/P1 is open; a giant "QA fixes" commit.
+- Stopping after one pass, or re-testing only the fixed items instead of the full pass.
+- Only confirming things work; never trying to break them (no red-team, no seeds, one account).
+- Making the count reach zero by lowering severity, skipping tests or shrinking the matrix.
 - Claiming the app is "100% bug-free". Report scores, evidence and what stayed untested instead.

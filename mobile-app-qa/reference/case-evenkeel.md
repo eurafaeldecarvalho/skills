@@ -47,6 +47,22 @@ Catalogs were written without locale research; pt-PT users get the pt-BR catalog
 (`src/i18n/index.ts:21-24`). → [translation-quality.md](translation-quality.md) and
 [locale-conventions.md](locale-conventions.md).
 
+## 5. "The Android navigation bar covers the app's buttons" (second tester report)
+Symptom: the system navigation bar (3-button bar or gesture handle) sits on top of the bottom tab bar /
+bottom buttons, so taps hit Home/Back instead of the app.
+Evidence (code reading, to confirm on device): Expo SDK 58 → the app is edge-to-edge on every Android
+version (and Android 15+/16 force it anyway), so it draws under the system bars and must pad itself. `src/nav/Root.tsx:273-275` — the
+`TabBar` uses a fixed `paddingBottom: 10` (`const bottom = 10`) instead of `useSafeAreaInsets().bottom`;
+`src/ui/kit.tsx` `Screen` pads the top and the scrolling/footer variants, but the non-scroll body
+(`scroll=false`, no footer) gets no bottom inset.
+Fix direction: tab bar `paddingBottom: Math.max(insets.bottom, 10)` (height grows with it); audit every
+absolutely positioned bottom element, FAB, sheet, toast and modal for `insets.bottom`; keyboard-avoiding
+views add the inset only when the keyboard is closed.
+Tests: matrix sweep with `NAVS="gestural threebutton"` → `nav-overlap` detector (interactive node bounds vs.
+the `navigationBars` frame from `dumpsys window`); Maestro tap on each tab by `testID` in 3-button mode
+(fails if Home is hit instead); visual check of the contact sheet; real Moto in both nav modes.
+
 ## Lesson
 All of this was invisible on the developer's emulator in light mode, English, font 1.0. The gate now
-requires the tester's config (mid-range Moto, dark, pt-BR, font 1.3, gesture nav) on real hardware.
+requires the tester's config (mid-range Moto, dark, pt-BR, font 1.3) in **both** gesture and 3-button
+navigation on real hardware.

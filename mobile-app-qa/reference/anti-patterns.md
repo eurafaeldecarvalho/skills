@@ -22,7 +22,15 @@
 | Testing dev build only | release-only crashes | build-and-release |
 | Fixed sleeps in E2E | flaky suite | grep `sleep`/`waitForAnimationToEnd` misuse |
 | Client-only permission checks | partner can edit A-only data via API | RLS tests |
+| RLS only on some tables / `SECURITY DEFINER` without membership check | stranger reads other family via API | `rls-probe.sh`, red-team S1–S5 |
+| Role column writable by members | co-parent makes himself owner | red-team S3 |
+| Short / reusable invite codes | invite brute-force or reuse | red-team S4 |
+| User text concatenated into PostgREST `.or()` filters | filter injection | grep template literals in queries |
+| Server trusts client-computed totals/splits | tampered request saves wrong money | DB `check` constraints, red-team S8 |
+| Tokens in AsyncStorage, PII in logs/analytics | leaks on rooted/backup/crash reports | red-team S13–S15 |
+| Instants stored as local time / dates as midnight UTC | event shows on the wrong day in another timezone | clock/timezone tests |
+| No upgrade test from the previous release | data lost or migration run twice after update | upgrade path check |
 | Floats for money | 0.1+0.2 cents drift | grep `parseFloat` in money paths |
 ## QA anti-patterns
 Declaring done from code reading · screenshots only in light/en-US · "can't reproduce" without matching
-the tester's config · fixing many things at once without re-verifying · trusting detectors without looking.
+the tester's config · fixing many things at once without re-verifying · trusting detectors without looking · one pass and done (no convergence loop) · re-testing only fixed items · never trying to break the app · "fixing" the count by lowering severity or skipping tests.

@@ -52,3 +52,11 @@ Then a human/vision review of every contact sheet — dark and each non-English 
 ## Caveats
 Emulator ≠ OEM skin (Moto/Samsung/Xiaomi), ≠ real GPU performance, ≠ real keyboards. The sweep finds
 layout/theme/format regressions; the gate still needs a real phone.
+
+## Navigation mode and system bars
+`NAVS="gestural threebutton"` (default) runs the whole matrix in both navigation modes (overlay switch via
+`adb-env.sh nav`). For each config the sweep records `nav=`, `navbar=` and `statusbar=` (px frames from
+`dumpsys window`, `InsetsSource type=navigationBars|statusBars`) in `env.txt`; `sweep-check.py` raises
+**P1 `nav-overlap` / `status-overlap`** when a clickable/text node intersects a bar by ≥ 6 dp. If the frame
+is empty (older images print a different format), check `adb-env.sh bars` by hand and review the contact
+sheets of the `threebutton` configs closely. The matrix doubles in size — trim fonts/sizes first, never nav.

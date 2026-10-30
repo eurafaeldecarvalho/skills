@@ -1,0 +1,42 @@
+# RED-TEAM: hostile/odd input on the expense form (copy the pattern to every text/money/date field).
+# Pass = never crashes, never saves a corrupted value, shows a validation message or saves exactly once.
+# Change SEED every iteration (maestro test -e SEED=$RANDOM …) so the random slice differs.
+# 10 000-char case: use setClipboard + pasteText (typing it via adb is too slow).
+appId: ${APP_ID}
+tags: [red-team, fuzz]
+env:
+  SEED: "1"
+---
+- runFlow: ../subflows/launch-clean.yaml
+- runFlow: ../subflows/login.yaml
+- evalScript: ${output.corpus = ["👨‍👩‍👧 Escola", "مرحبا عالم", "\u202Eabc", "<script>alert(1)</script>", "'); drop table expenses;--", "%s %n {0} {{x}}", "   ", "null", "x".repeat(2000)]}
+- evalScript: ${output.money = ["0", "-1", "0,001", "1,999", "1.234,56", "1,234.56", "999999999999", "1e9", "R$ 10,00", "٣٤٥"]}
+- evalScript: ${output.i = 0}
+- tapOn: { id: "tab-expenses" }
+- repeat:
+    times: 9
+    commands:
+      - tapOn: { id: "expense-add" }
+      - tapOn: { id: "expense-title" }
+      - inputText: ${output.corpus[output.i]}
+      - tapOn: { id: "expense-amount" }
+      - inputText: ${output.money[(output.i + Number(SEED)) % output.money.length]}
+      - hideKeyboard
+      # hostile double submit: must create at most one row
+      - doubleTapOn: { id: "expense-save", optional: true }
+      - runFlow:
+          when: { visible: { id: "expense-amount-error" } }
+          commands:
+            - back
+      - assertNotVisible: { text: ".*(undefined|NaN|\\[object Object\\]|Error:).*" }
+      - evalScript: ${output.i = output.i + 1}
+# random free-text pass (different every run)
+- tapOn: { id: "expense-add" }
+- tapOn: { id: "expense-title" }
+- inputRandomText: { length: 300 }
+- tapOn: { id: "expense-amount" }
+- inputRandomNumber: { length: 7 }
+- hideKeyboard
+- tapOn: { id: "expense-save" }
+- assertNotVisible: { text: ".*(undefined|NaN|Error:).*" }
+# After the flow: check by SQL that each accepted item exists exactly once and amounts are integer cents.

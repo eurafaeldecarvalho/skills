@@ -9,7 +9,8 @@
 | Slow / lossy | emulator `adb emu network speed gsm` / `adb emu network delay umts` | timeouts handled, skeletons, cancelable |
 | Captive portal / no internet on Wi-Fi | Wi-Fi without internet | `isInternetReachable` false or `null` (= **unknown**, not offline) |
 | Server error 500/timeout | test backend toggle, proxy, or mock | error ≠ offline; retry with backoff; message says what to do |
-| Session expired | wait >1 h / revoke token | silent refresh or clean re-login, no data loss |
+| Session expired | staging: set JWT expiry low (e.g. 60 s) in Auth settings; or wait; sign out other sessions | silent refresh or clean re-login, no data loss, queued writes kept, no refresh loop |
+| Removed from space / deleted elsewhere | owner removes member on device A while B is open | B loses access server-side at once, cache cleared, clear message |
 Every degraded-state banner: entry condition, exit condition re-checked (timer + foreground + network
 event), manual retry/dismiss, never covers primary actions, localized.
 
@@ -21,13 +22,25 @@ event), manual retry/dismiss, never covers primary actions, localized.
 - Rotate (if allowed), split-screen, change theme/language/font **while the app is open** → re-render.
 - Permissions: `adb shell pm grant|revoke <pkg> android.permission.POST_NOTIFICATIONS|CAMERA|READ_MEDIA_IMAGES`;
   first ask, denied, "don't ask again", revoked from settings while running → app explains and recovers.
-- Low storage, low battery saver, OEM battery optimization (Xiaomi/Samsung) killing background sync.
-- Clock changes (set time manually, timezone change) for schedule features.
-- Upgrade from previous release with existing data (`adb install -r`).
+- Low memory: `adb shell am send-trim-memory <pkg> RUNNING_CRITICAL` (foreground) and `COMPLETE`
+  (after Home) → state kept, no crash. Low storage: `adb shell cmd devicestoragemonitor force-low -f`
+  (reset: `… reset`) or fill `/sdcard` on the emulator → writes fail gracefully, local DB not corrupted.
+- Battery saver (`adb shell settings put global low_power 1`), OEM battery optimization (Xiaomi/Samsung)
+  killing background sync — real device.
+- Clock/timezone: `settings put global auto_time 0` / `auto_time_zone 0`, then `cmd alarm set-timezone
+  America/New_York` and `cmd alarm set-time <epoch-ms>` (or `adb root` + `date` on a non-Play image;
+  real phones: Settings). Test while the app is open, DST gap/overlap days, leap day, year boundary.
+  Store instants in UTC, civil dates (due dates, birthdays) as dates — never as midnight UTC.
+- **Upgrade over an installed build:** install previous production APK/AAB → create data in every
+  feature (+ pending offline writes) → `adb install -r` the new release (and later via the Play test
+  track) → data intact, migrations ran once, session kept, outbox flushed. Then downgrade is refused
+  cleanly. Old client against the migrated backend still works or is force-updated with a message.
+- Reinstall and `pm clear`: onboarding works, server data comes back after login, nothing stale.
+- TalkBack on/off while the app runs; accessibility services don't crash custom components.
 
 ## Performance
 Budgets (mid-range device such as a Moto G, release build): cold start to interactive < 2 s (warn > 3 s);
-no frame drops on main lists while scrolling (janky frames < 5 %); input latency imperceptible; memory
+no frame drops on main lists while scrolling (janky frames < 5 %); tap-to-feedback < 100 ms on the main actions; memory
 stable across 10× navigate-back loops; APK/AAB size tracked.
 ```bash
 adb shell am start -W -S -n <pkg>/.MainActivity         # TotalTime (cold start)

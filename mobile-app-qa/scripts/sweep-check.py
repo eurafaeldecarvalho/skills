@@ -45,8 +45,35 @@ def nodes(xml_path):
             continue
         out.append({"text": (n.get("text") or "").strip(), "desc": (n.get("content-desc") or "").strip(),
                     "clickable": n.get("clickable") == "true", "rid": n.get("resource-id", ""),
+                    "pkg": n.get("package", ""),
                     "b": tuple(map(int, m.groups()))})
     return out
+
+def parse_env(envf):
+    env = {}
+    if envf.exists():
+        for line in envf.read_text().splitlines():
+            if "=" in line:
+                k, v = line.split("=", 1)
+                env[k.strip()] = v.strip()
+    return env
+
+def rect(v):
+    try:
+        r = tuple(int(x) for x in v.split(","))
+        return r if len(r) == 4 and r[2] > r[0] and r[3] > r[1] else None
+    except (ValueError, AttributeError):
+        return None
+
+def overlap(a, b):
+    """Overlap in px (width, height) of two [x1,y1,x2,y2] rects."""
+    return max(0, min(a[2], b[2]) - max(a[0], b[0])), max(0, min(a[3], b[3]) - max(a[1], b[1]))
+
+def resolve(run, p):
+    """Manifest paths may be cwd-relative (as written by matrix-sweep.sh) or relative to the run dir."""
+    p = Path(p)
+    return p if p.is_absolute() or p.exists() else Path(run) / p
+
 
 def check_image(png):
     im = Image.open(png).convert("RGB")
@@ -74,18 +101,16 @@ def main():
         findings.append({"severity": sev, "detector": det, "config": row["config"], "screen": row["screen"], "detail": msg})
     banners = defaultdict(lambda: defaultdict(set))
     for row in rows:
-        png = Path(row["png"]); xmlp = Path(row["xml"]) if row.get("xml") else png.with_suffix(".xml")
+        png = resolve(run, row["png"]); xmlp = resolve(run, row["xml"]) if row.get("xml") else png.with_suffix(".xml")
         if not png.exists() or png.stat().st_size == 0:
             add("P1", "missing-screenshot", row, "no screenshot captured"); continue
         im, mean, sd = check_image(png)
         blank = sd < 6
         if blank:
             add("P0", "blank-screen", row, f"almost uniform screen (mean luminance {mean:.0f}, sd {sd:.1f}) — black/white/blank?")
-        envf = png.parent / "env.txt"
-        dens = 420
-        if envf.exists():
-            m = re.search(r"density=(\d+)", envf.read_text())
-            dens = int(m.group(1)) if m else dens
+        env = parse_env(png.parent / "env.txt")
+        dens = int(env["density"]) if env.get("density", "").isdigit() else 420
+        navbar, statusbar, nav = rect(env.get("navbar")), rect(env.get("statusbar")), env.get("nav", "?")
         min_px = 48 * dens / 160
         ns = nodes(xmlp) if xmlp.exists() else []
         loc = row["locale"]; lang = loc.split("-")[0]
@@ -106,6 +131,18 @@ def main():
             x1, y1, x2, y2 = n["b"]
             if n["clickable"] and (x2 - x1) > 0 and ((x2 - x1) < min_px - 1 or (y2 - y1) < min_px - 1):
                 add("P2", "small-target", row, f"touch target {(x2-x1)*160/dens:.0f}x{(y2-y1)*160/dens:.0f}dp {n['rid'] or n['text'] or n['desc']!r}")
+            interactive = n["clickable"] or n["text"] or n["desc"]
+            small_node = (y2 - y1) < H * 0.5 and n["pkg"] != "com.android.systemui"
+            if interactive and small_node:
+                for bar, name in ((navbar, "nav"), (statusbar, "status")):
+                    if bar:
+                        ow, oh = overlap(n["b"], bar)
+                        if ow > 0 and oh >= 6 * dens / 160:
+                            what = n["rid"] or n["text"] or n["desc"]
+                            add("P1", f"{name}-overlap", row,
+                                f"{'control' if n['clickable'] else 'text'} {what!r} overlaps the system {name} bar "
+                                f"({nav} nav, {oh * 160 / dens:.0f}dp) — missing safe-area inset?")
+                            break
             if n["text"] and (x2 > W + 2 or y2 > H + 2 or x1 < -2):
                 add("P2", "clipped-text", row, f"text outside screen: {n['text']!r}")
             if n["text"] and y1 < H * 0.2 and len(n["text"]) > 12:
@@ -140,14 +177,14 @@ def main():
     if contact:
         by_cfg = defaultdict(list)
         for r in rows:
-            if Path(r["png"]).exists():
+            if resolve(run, r["png"]).exists():
                 by_cfg[r["config"]].append(r)
         for cfg, rs in by_cfg.items():
             tw, th, cols = 270, 585, 6
             sheet = Image.new("RGB", (tw * min(cols, len(rs)), (th + 22) * ((len(rs) + cols - 1) // cols)), "gray")
             d = ImageDraw.Draw(sheet)
             for i, r in enumerate(rs):
-                im = Image.open(r["png"]).convert("RGB"); im.thumbnail((tw, th))
+                im = Image.open(resolve(run, r["png"])).convert("RGB"); im.thumbnail((tw, th))
                 x, y = (i % cols) * tw, (i // cols) * (th + 22)
                 sheet.paste(im, (x, y + 22)); d.text((x + 4, y + 4), r["screen"], fill="white")
             sheet.save(run / f"contact-{cfg}.png")

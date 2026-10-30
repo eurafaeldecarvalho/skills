@@ -43,3 +43,22 @@ fix-until-green loop.
 - Microsoft localization style guides (pt-BR, pt-PT, es-MX, Spanish neutral):
   <https://learn.microsoft.com/en-us/globalization/reference/microsoft-style-guides>
 - NetInfo / expo-network reachability (`null` = unknown): <https://docs.expo.dev/versions/latest/sdk/network/>
+
+## Red-team and convergence loop
+- OWASP Mobile Application Security (MASVS / MASTG): https://mas.owasp.org/
+- OWASP API Security Top 10 (BOLA/IDOR, broken function-level authorization): https://owasp.org/API-Security/
+- Supabase Row Level Security: https://supabase.com/docs/guides/database/postgres/row-level-security
+- Supabase database functions (`SECURITY DEFINER`, `search_path`): https://supabase.com/docs/guides/database/functions
+- Android UI/Application Exerciser Monkey: https://developer.android.com/studio/test/other-testing-tools/monkey
+- Maestro commands (`inputRandomText`, `repeat`, `evalScript`): https://docs.maestro.dev/
+- Android pseudo-locales (`en-XA`, `ar-XB`): https://developer.android.com/guide/topics/resources/pseudolocales
+
+## FINAL PASS (install and run the real artifact)
+- bundletool — https://developer.android.com/tools/bundletool (`build-apks --mode=universal`, signing flags)
+- Start the emulator from the command line — https://developer.android.com/studio/run/emulator-commandline
+- avdmanager / sdkmanager — https://developer.android.com/tools/avdmanager · https://developer.android.com/tools/sdkmanager
+- adb (install, screenrecord, screencap) — https://developer.android.com/tools/adb
+- Logcat — https://developer.android.com/tools/logcat · ANRs — https://developer.android.com/topic/performance/vitals/anr
+- Slow rendering / `dumpsys gfxinfo` — https://developer.android.com/topic/performance/rendering/inspect-gpu-rendering
+- ApplicationExitInfo reasons — https://developer.android.com/reference/android/app/ApplicationExitInfo
+- Play internal/closed testing — https://support.google.com/googleplay/android-developer/answer/9845334
