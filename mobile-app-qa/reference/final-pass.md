@@ -73,6 +73,9 @@ Per emulator profile (mid-range A14, mid-range A15/16, small screen), both nav m
    (fg/bg/killed — Play-services image), account deletion, cleanup verified.
 3. **Maestro suite** in full: `maestro test .maestro/ --format junit --output qa/final/maestro.xml`.
 4. **Matrix sweep** (`scripts/matrix-sweep.sh` + `sweep-check.py`) on this install — zero detector flags.
+4b. **Launch/splash pass** on this install: `scripts/splash-capture.sh` (cold + warm + hot × light + dark ×
+   small / 1080×2400 / tablet) → `sweep-check.py --splash --logo` clean, strips reviewed, launcher icon
+   (normal, themed, round) checked → [launch-and-visual-precision.md](launch-and-visual-precision.md).
 5. **Red-team quick pass**: monkey with 3 fresh seeds (`red-team-chaos.sh monkey 5000 <s1> <s2> <s3>`),
    kill mid-write, airplane mid-write, back spam, revoke permissions, clear data; `rls-probe.sh` on the
    core tables with the stranger account; APK secret grep (S12) on *this* APK.

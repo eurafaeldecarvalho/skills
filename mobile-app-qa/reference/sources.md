@@ -25,6 +25,13 @@ fix-until-green loop.
 
 ## Platform docs
 - Expo color themes / `userInterfaceStyle` + expo-system-ui: <https://docs.expo.dev/develop/user-interface/color-themes/>
+- Android 12+ splash screen (icon sizes/circle mask, background, cold/warm/hot): <https://developer.android.com/develop/ui/views/launch/splash-screen>
+  and migration: <https://developer.android.com/develop/ui/views/launch/splash-screen/migrate>
+- Adaptive + themed (monochrome) icons, 66/108 safe zone: <https://developer.android.com/develop/ui/views/launch/icon_design_adaptive>
+- expo-splash-screen (config plugin `image`/`imageWidth`/`resizeMode`/`dark`, `preventAutoHideAsync`/`hide`): <https://docs.expo.dev/versions/latest/sdk/splash-screen/>
+- Expo splash screen and app icon guide: <https://docs.expo.dev/develop/user-interface/splash-screen-and-app-icon/>
+- Android `includeFontPadding` / `TextView` font padding: <https://developer.android.com/reference/android/widget/TextView#attr_android:includeFontPadding>
+- `adb shell screenrecord`: <https://developer.android.com/tools/adb#screenrecord>
 - Expo edge-to-edge (SDK 54): <https://expo.dev/blog/edge-to-edge-display-now-streamlined-for-android>
 - expo-localization: <https://docs.expo.dev/versions/latest/sdk/localization/>
 - Expo + Maestro E2E: <https://docs.expo.dev/eas/workflows/examples/e2e-tests/>

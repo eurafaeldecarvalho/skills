@@ -11,6 +11,8 @@ in-app override, on the release build, including native surfaces React doesn't d
 - `useColorScheme()` / `Appearance` gives the system scheme; an in-app "System / Light / Dark" setting
   must combine both (`appearance === 'system' ? systemScheme : appearance`) and also drive
   `Appearance.setColorScheme()` (RN ≥0.72) if native components (Alert, DatePicker, keyboard) should follow.
+- Launch/splash (distortion, placeholder, safe area, per-theme color, flash/jump) and the launcher icon have
+  their own pass with frame capture and detectors → [launch-and-visual-precision.md](launch-and-visual-precision.md).
 - Native surfaces to check: splash screen (`expo-splash-screen` `dark` config), root background
   (`expo-system-ui` `setBackgroundColorAsync` / `backgroundColor`), status bar style (`expo-status-bar`
   `style="auto"` or explicit per theme), nav bar buttons, `Modal` (own window), `Alert`, date/time

@@ -49,8 +49,10 @@ functional-testing method and scripts are original. More sources in
   screens → screenshots + UI dumps), [`scripts/sweep-check.py`](scripts/sweep-check.py) (detectors:
   black/blank screens, wrong money/number format per locale, raw i18n keys, `undefined`/`NaN`,
   untranslated English, invisible/low-contrast text, small touch targets, stuck banners, controls under
-  the system navigation/status bar),
-  [`scripts/adb-env.sh`](scripts/adb-env.sh) (one-line device
+  the system navigation/status bar, off-center button labels, stretched images; `--splash` splash-frame
+  checks; `--launch-audit` static splash/icon config audit),
+  [`scripts/splash-capture.sh`](scripts/splash-capture.sh) (screenrecord every cold/warm/hot launch per
+  profile × theme → frames), [`scripts/adb-env.sh`](scripts/adb-env.sh) (one-line device
   state toggles + reset).
 - **Red-team:** [`scripts/red-team-chaos.sh`](scripts/red-team-chaos.sh) (seeded monkey, trim-memory, low
   storage, clock/timezone, rotation, back spam, kill mid-write, clear data, permission revoke) and
@@ -83,7 +85,8 @@ functional-testing method and scripts are original. More sources in
 | 2 | **Audit** (code + build) | Everything measurable without a person: types, lint, unit/integration tests, release config, theming tokens, i18n catalog, formatting helpers, RLS/security, dead flags. | scored findings |
 | 3 | **Functional E2E** | Every inventory row: happy path + edge + failure, automated with Maestro where possible; two-account flows; data correctness checked against an oracle. | findings + flows |
 | 3b | **Live E2E** (mandatory) | Real backend, real tagged accounts (`qa+<run>@…`), real emails in a real inbox (arrival, spam, SPF/DKIM, links), real DB rows checked with SQL, RLS between real accounts, real FCM push on devices (fg/bg/killed), two devices for multi-user, uploads, test-mode billing, account deletion, then verified cleanup. Never touches real users' data; never prints secrets. | live evidence + cleanup log |
-| 4 | **Matrix sweep** | Every screen × light/dark × every locale × font scale × screen size × 3-button/gesture nav on the release build; detectors + human review of the contact sheet. | findings + screenshots |
+| 4 | **Matrix sweep** | Every screen × light/dark × every locale × font scale × screen size × 3-button/gesture nav on the release build; detectors (incl. `label-offcenter`, `image-distortion`) + human review of the contact sheet and crops. | findings + screenshots |
+| 4b | **Launch/splash pass** (mandatory) | `--launch-audit` of the splash/icon config, then screenrecord **cold + warm (+ hot)** launches in **light + dark** on small, 1080×2400 and tablet profiles: Android 12+ SplashScreen rules (icon inside the 160/192 dp circle, no stretching, background color per theme), adaptive + monochrome launcher icon, native splash → first screen with no flash/jump/blank; frame detectors + human review of the strips. → [reference/launch-and-visual-precision.md](reference/launch-and-visual-precision.md) | `qa/splash/<run>/` frames + strips |
 | 5 | **Harden** | Offline/slow/flaky network, process death, permissions denied, background/foreground, push, deep links, extreme data, clock/timezone, upgrades. | findings |
 | 6 | **Critique** (look & UX) | Use the app like a first-time user on a real phone; judge hierarchy, clarity, feedback, consistency, platform conformance (Material 3 on Android). | findings |
 | 6b | **RED-TEAM** (mandatory, every iteration) | Act as attacker and hostile user: chaos (monkey with seeds, fuzz/adversarial inputs, double taps, kill/airplane mid-write, trim-memory, low storage, clock/DST, rotation, permission revoke, two users editing the same record, expired session) **and** security abuse (RLS/IDOR across spaces, privilege escalation between co-parents, invite abuse, RPC/storage/realtime access, tampered requests, injection, auth abuse, deep-link injection, APK secrets, PII in logs, consent). Every successful attack is a finding. → [reference/red-team.md](reference/red-team.md) | `qa/red-team/<iter>/` |
@@ -124,9 +127,12 @@ Rules for running it:
 - **P1 Major** — a large share of users will struggle or distrust the app: wrong number/date/currency
   format for the chosen language, untranslated strings, banner/toast that never goes away, text clipped
   at font scale 1.3, keyboard covering the submit button, **system navigation/status bar covering app
-  controls (3-button or gesture nav)**, TalkBack can't reach a primary action,
+  controls (3-button or gesture nav)**, **distorted/stretched/placeholder splash or logo, splash in the
+  wrong theme, white/black flash or logo jump at launch** (first impression), TalkBack can't reach a primary action,
   offline edits silently lost on restart, broken back gesture. Fix before release.
-- **P2 Minor** — annoyance with a workaround: inconsistent spacing, a missing empty state illustration,
+- **P2 Minor** — annoyance with a workaround: inconsistent spacing, **button/chip label off-center (> 2 dp;
+  P1 on the welcome/sign-in/sign-up primary actions), squashed/stretched image, off-grid alignment,
+  inconsistent icon sizes**, a missing empty state illustration,
   slow-but-working screen, minor contrast miss on secondary text. Next pass.
 - **P3 Polish** — finish details: motion timing, copy tone, icon alignment. If time permits; keep short.
 
@@ -195,6 +201,8 @@ excellent, verified on a real device in every supported config.
 - [ ] Dark theme is designed, not inverted: surfaces have visible elevation steps (not pure `#000` everywhere), text ≥ 4.5:1, borders/dividers visible, disabled states distinguishable.
 - [ ] Native surfaces follow the theme: splash (dark variant), root view background, status/nav bar icon contrast, keyboard appearance, `Modal`, `Alert`, date pickers, WebViews.
 - [ ] Theme switches live (no restart) and survives process death; no white/black flash at launch.
+- [ ] **Launch/splash (P1) → [reference/launch-and-visual-precision.md](reference/launch-and-visual-precision.md):** `sweep-check.py --launch-audit` clean (expo-splash-screen with transparent logo, `imageWidth`, `resizeMode: contain`, `dark` block; no bitmap `windowBackground`; no Expo placeholder); `splash-capture.sh` frames for cold + warm + hot × light + dark × small/1080×2400/tablet: logo round/undistorted and centered, background matches the theme and the first screen, no flash, jump or blank frame; `--splash` detectors clean and every strip reviewed.
+- [ ] Launcher icon: adaptive foreground inside the 66/108 safe zone (circle, squircle, rounded-square masks), monochrome layer for Android 13+ themed icons, light and dark launchers.
 - [ ] OEM "force dark"/"dark mode for apps" toggles don't double-invert the app (test on a real Motorola/Samsung/Xiaomi when possible).
 
 ### 5. Localization & formatting → [reference/i18n-and-formatting.md](reference/i18n-and-formatting.md) + [reference/translation-quality.md](reference/translation-quality.md)
@@ -220,6 +228,7 @@ excellent, verified on a real device in every supported config.
 - [ ] Keyboard open in both nav modes: focused input and submit visible, no double inset (keyboard + nav inset) gap.
 - [ ] Keyboard never covers the focused input or the submit button (test small screen + font 1.3 + gesture nav).
 - [ ] Small phone (≈360×640 dp) and large phone/tablet/landscape (if supported) both usable.
+- [ ] **Visual precision (P2; P1 on first screens):** labels centered horizontally **and** vertically in every button/chip/pill/tab (Android `includeFontPadding` + custom font metrics), in every locale and font scale; images/logos keep their aspect ratio (`qa/assets.tsv` → `image-distortion`); 4/8 dp grid, aligned edges and baselines, one icon scale; `label-offcenter`/`image-distortion` clean and crops of the first screens' primary buttons reviewed at 200 %.
 
 ### 7. Accessibility → [reference/accessibility.md](reference/accessibility.md)
 - [ ] TalkBack: every control has a role + label + state, logical order, no traps, banners announced (`accessibilityLiveRegion`), focus moves on navigation.
@@ -266,7 +275,12 @@ APP_ID=com.example.app SCREENS=qa/screens.txt OUT=qa/sweep/$(date +%F-%H%M) \
 LOCALES="en-US pt-BR es-419 pt-PT" THEMES="light dark" FONTS="1.0 1.3 2.0" SIZES="default small" \
 NAVS="gestural threebutton" \
   mobile-app-qa/scripts/matrix-sweep.sh
-python3 mobile-app-qa/scripts/sweep-check.py qa/sweep/<run>   # → findings.md + contact sheet
+FIRST_SCREENS=welcome,sign-in,sign-up python3 mobile-app-qa/scripts/sweep-check.py qa/sweep/<run> --assets qa/assets.tsv
+#   → findings.md + contact sheets + crops/ (label-offcenter, image-distortion and the rest)
+# launch/splash pass (pass 4b)
+python3 mobile-app-qa/scripts/sweep-check.py --launch-audit . [--android-res android/app/src/main/res]
+APP_ID=com.example.app BOX_PROJECT=<proj> mobile-app-qa/scripts/splash-capture.sh   # cold/warm/hot × light/dark × 3 profiles
+python3 mobile-app-qa/scripts/sweep-check.py --splash qa/splash/<run> --logo assets/logo.png
 ```
 Core toggles it uses (all restorable; `scripts/adb-env.sh reset` puts the device back):
 `cmd uimode night yes|no` · `cmd locale set-app-locales <pkg> --locales pt-BR` (Android 13+, no root) ·
@@ -299,6 +313,10 @@ Ship (even to a closed test) only when all are true; otherwise report what's mis
 - [ ] **Live E2E pass green on the release build installed from the Play test track** (real accounts, emails, DB checks, push, two devices, deletion) with cleanup verified → [reference/live-e2e.md](reference/live-e2e.md).
 - [ ] **Insets (P1):** every screen in **3-button and gesture navigation**, edge-to-edge, no control or text
       under the system bars (`nav-overlap`/`status-overlap` clean + contact sheet reviewed), keyboard cases included.
+- [ ] **Launch/splash (P1):** `--launch-audit` and `--splash` clean on the release build (cold + warm, light +
+      dark, small/1080×2400/tablet); logo undistorted and centered, splash color per theme, no flash/jump; adaptive
+      + monochrome icon checked; strips reviewed. **Visual precision (P2):** `label-offcenter`/`image-distortion`
+      clean or triaged; first screens' primary buttons crop-reviewed.
 - [ ] Real low/mid Android phone: full main flow in **dark + pt-BR + font 1.3 + gesture nav** and again in
       **3-button nav**, and in light + en-US.
 - [ ] Pre-launch report: no crashes/ANRs; warnings triaged.
@@ -339,7 +357,14 @@ Full analysis and the regression tests they produced: [reference/case-evenkeel.m
 5. **"The Android navigation bar covers the app's buttons."** Expo SDK 54+ draws edge-to-edge on every
    Android version, but the bottom tab bar used a fixed bottom padding instead of the safe-area inset. →
    Every screen in 3-button **and** gesture nav, `nav-overlap` detector, insets on every bottom element.
-6. Testers found these in minutes on one phone — the gate's "real mid-range Android, dark + pt-BR +
+6. **"The launch logo is distorted/stretched."** No `expo-splash-screen` config: prebuild left the Expo
+   template placeholder as a **bitmap `android:windowBackground`**, which Android stretches to the whole
+   window (a square becomes a 20:9 oval), white even in dark mode. → Launch/splash pass with frame
+   capture on several aspect ratios; `--launch-audit` + `--splash` detectors; P1.
+7. **"The text isn't centered in 'Criar uma conta' / 'Entrar'."** The layout was "centered" but the label
+   ink wasn't: Android font padding + Geist metrics (and a wrapping flex row) shift it. → `label-offcenter`
+   detector on uiautomator bounds + ink, crops reviewed at 200 %; P1 on the first screens.
+8. Testers found these in minutes on one phone — the gate's "real mid-range Android, dark + pt-BR +
    font 1.3" line exists because of this.
 
 ## Anti-patterns of the QA itself
@@ -353,5 +378,7 @@ Full analysis and the regression tests they produced: [reference/case-evenkeel.m
 - Polishing visuals while a P0/P1 is open; a giant "QA fixes" commit.
 - Stopping after one pass, or re-testing only the fixed items instead of the full pass.
 - Only confirming things work; never trying to break them (no red-team, no seeds, one account).
+- Judging the launch from code or a single dev-build cold start in light mode; never recording the splash frames.
+- Calling a layout "centered" from the code (`alignItems: center`) without measuring the rendered ink.
 - Making the count reach zero by lowering severity, skipping tests or shrinking the matrix.
 - Claiming the app is "100% bug-free". Report scores, evidence and what stayed untested instead.

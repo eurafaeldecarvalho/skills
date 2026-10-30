@@ -51,6 +51,12 @@ Free reach: Play pre-launch report runs on several real devices; Firebase Test L
 - Android back (button and predictive gesture) does the expected thing on every screen, closes sheets/modals
   first, never exits a half-filled form silently.
 
+## Visual precision
+Label centering in buttons/chips/pills (Android font padding), image aspect ratio, spacing grid, icon sizes
+and pixel-level alignment, with the `label-offcenter` and `image-distortion` detectors →
+[launch-and-visual-precision.md](launch-and-visual-precision.md) §B. The splash is checked on small,
+1080×2400 and tablet profiles (aspect ratio changes expose stretched bitmaps).
+
 ## Anti-patterns
 Fixed heights for text containers · absolute positioning near screen edges without insets · testing only
 on a Pixel emulator at font 1.0 · `allowFontScaling={false}` everywhere.

@@ -4,6 +4,7 @@
 - Who uses it, where: (countries, languages, typical phones — e.g. "parents in BR on Moto G/Galaxy A")
 - Shipped locales (language → format locale → currency): e.g. pt-BR → pt-BR → BRL; es → es-AR → ARS
 - Themes: system / light / dark (in-app override? y/n)
+- Launch & brand: splash logo file (transparent) + `imageWidth`, splash colors light/dark, adaptive icon (fg/bg/monochrome); first screens for `FIRST_SCREENS` (e.g. welcome,sign-in,sign-up); `qa/assets.tsv` maps logo/image testIDs → source asset or W:H
 - Roles & accounts: (owner, co-parent, viewer…) · test accounts: in password manager / CI secrets (never here)
 - Critical flows (money, permissions, destructive, legal): …
 - Build: release command, how to get an APK, signing (no secrets here)

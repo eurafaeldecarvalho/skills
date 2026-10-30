@@ -47,7 +47,12 @@ Full cross product (4 locales × 2 themes × 3 fonts × 2 sizes = 48 configs) is
 otherwise run full on the core screens and pairwise on the rest. Detectors: `blank-screen`,
 `us-money` (non-en locale), `raw-key`, `bad-value` (undefined/NaN/null/[object Object]), `small-target`
 (<48dp), `stuck-banner` (same banner text on most screens), `untranslated` (English UI words in non-en),
-`low-contrast` (heuristic from pixels in text bounds), `clipped-text` (text bounds outside screen).
+`low-contrast` (heuristic from pixels in text bounds), `clipped-text` (text bounds outside screen),
+`label-offcenter` (button-class nodes ≤ 72 dp: text-child bounds **and** label ink vs the button center,
+> 2 dp; P1 on `FIRST_SCREENS`), `image-distortion` (nodes listed in `--assets qa/assets.tsv`, rendered vs
+source aspect, > 4 %). Flagged nodes are saved as 2× crops in `crops/<cfg>/`. The launch/splash pass has its
+own capture (`splash-capture.sh`) and modes (`--splash`, `--launch-audit`) →
+[launch-and-visual-precision.md](launch-and-visual-precision.md).
 Then a human/vision review of every contact sheet — dark and each non-English locale at minimum.
 
 ## Caveats
