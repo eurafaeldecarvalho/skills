@@ -8,7 +8,7 @@ local RS = game:GetService("ReplicatedStorage")
 local Http = game:GetService("HttpService")
 local LogService = game:GetService("LogService")
 local args = STS:GetTestArgs()
-local n = tonumber(string.match(tostring(args), "%d+")) or 2
+local n = tonumber(string.match(tostring(args), "^(%d+)")) or 2 -- args = "<n> <rotulo> seed<s>"
 local t0 = os.clock()
 local r = { args = tostring(args), passos = {}, cli = {}, logsServidor = {}, logsCliente = {}, ui = {} }
 local function passo(s) table.insert(r.passos, string.format("%.1f %s", os.clock() - t0, s)) end
@@ -83,7 +83,10 @@ end
 if not (coz and vig) then return fim("sem dupla Cozinheiro+Vigia: " .. Http:JSONEncode(papeis())) end
 -- red-team pelo cliente Vigia (nao e cozinheiro): nada pode mudar na cozinha
 local maoAntes = table.concat(Cozinha.mao(), ",")
-r.redteamVigia = pedir(vig, "redteam", nil, 15)
+r.seed = tonumber(string.match(tostring(args), "seed(%d+)")) or 0
+local errosAntes = #r.logsServidor
+r.redteamVigia = pedir(vig, "redteam", { seed = r.seed }, 25)
+r.errosServidorNoRedteam = #r.logsServidor - errosAntes
 task.wait(1)
 r.redteamVigiaMao = { antes = maoAntes, depois = table.concat(Cozinha.mao(), ","), papeis = papeis(), modo = Sessao.modo() }
 -- cozinheiro real: Caldo pelos remotes do cliente
@@ -97,7 +100,8 @@ r.pedidoJanela = c and Http:JSONEncode(c.pedido)
 task.wait(2)
 relatorioTodos("comClienteNaJanela")
 -- ui-audit da skill rodando nos 2 clientes durante o T1 (QA_UiTurno, DELAY_S curto disparado por comando)
-ate(function() local k = 0 for _, u in r.ui do if u.tag == "UI-AUDIT-TURNO" then k += 1 end end return k >= n end, 45)
+for _, p in Players:GetPlayers() do canal:FireClient(p, "uiaudit") end
+ate(function() local k = 0 for _, u in r.ui do if u.tag == "UI-AUDIT-TURNO" then k += 1 end end return k >= n end, 25)
 -- cozinheiro atende o cliente da janela (Servir se o pedido for Caldo, senao Recusar)
 if c then
 	local dec = if string.find(r.pedidoJanela or "", "Caldo") and not string.find(r.pedidoJanela or "", "Pastel") then "Servir" else "Recusar"
@@ -154,6 +158,19 @@ canal.OnClientEvent:Connect(function(tag, extra)
 			avisos = table.concat(cont.avisos, " | "), telas = telas(), cameraTipo = cam.CameraType.Name,
 			camPos = string.format("%.0f,%.0f,%.0f", cam.CFrame.Position.X, cam.CFrame.Position.Y, cam.CFrame.Position.Z),
 			viewport = string.format("%dx%d", cam.ViewportSize.X, cam.ViewportSize.Y),
+			toqueVisiveis = (function()
+				local tg = lp.PlayerGui:FindFirstChild("TouchGui")
+				if not tg then return "sem TouchGui" end
+				local v = {}
+				for _, x in tg:GetDescendants() do
+					if x:IsA("GuiObject") and x.Visible and (x.Name:find("Jump") or x.Name:find("Thumbstick")) then
+						local vis, a = true, x.Parent
+						while a and a ~= tg do if a:IsA("GuiObject") and not a.Visible then vis = false end a = a.Parent end
+						if vis then table.insert(v, x.Name) end
+					end
+				end
+				return (tg.Enabled and "on:" or "off:") .. table.concat(v, ",")
+			end)(),
 		})
 	elseif tag == "redteam" then
 		-- cliente hostil: tipos errados, papel alheio, spam
@@ -169,8 +186,27 @@ canal.OnClientEvent:Connect(function(tag, extra)
 		R.MaisUmaNoite:FireServer()
 		R.EnviarPing:FireServer(999, "todos")
 		R.EnviarPing:FireServer(nil, nil)
+		-- macaco com seed (seed nova a cada iteracao): remotes do jogo x argumentos hostis aleatorios
+		local disparos, falhasLocais = 0, 0
+		if typeof(extra) == "table" and extra.seed then
+			local rng = Random.new(extra.seed)
+			local alvos = {}
+			for _, x in R:GetChildren() do if x:IsA("RemoteEvent") then table.insert(alvos, x) end end
+			table.sort(alvos, function(a, b) return a.Name < b.Name end)
+			local pool = { 0, -1, 1, 2, 7, 1e9, -1e9, 0 / 0, math.huge, "", "Moenda", "Copos", "Fritadeira", "Servir", "Recusar", "Clique", "Inicio", "Fim", "Cozinheiro", "Vigia", "todos", string.rep("z", 3000), {}, { 1, 2, 3 }, { id = 1 }, true, false, Vector3.new(1e6, 0, 0), workspace, lp }
+			for _ = 1, 120 do
+				local alvo = alvos[rng:NextInteger(1, #alvos)]
+				local a = {}
+				local k = rng:NextInteger(0, 3)
+				for j = 1, k do a[j] = pool[rng:NextInteger(1, #pool)] end
+				local ok = pcall(function() alvo:FireServer(table.unpack(a, 1, k)) end)
+				disparos += 1
+				if not ok then falhasLocais += 1 end
+				if rng:NextNumber() < 0.2 then task.wait() end
+			end
+		end
 		task.wait(2)
-		canal:FireServer("redteam", { papelDepois = papel, modoDepois = modo, maoMsgsNovas = cont.mao - m0 })
+		canal:FireServer("redteam", { papelDepois = papel, modoDepois = modo, maoMsgsNovas = cont.mao - m0, seed = typeof(extra) == "table" and extra.seed, disparos = disparos, falhasLocais = falhasLocais })
 	elseif tag == "caldo" then
 		local m0 = cont.mao
 		R.AcaoCozinha:FireServer("Moenda", "Clique")
@@ -186,6 +222,12 @@ canal.OnClientEvent:Connect(function(tag, extra)
 		R.Atender:FireServer(extra.id, extra.decisao)
 		task.wait(1)
 		canal:FireServer("atender", { mao = maoTxt(ultimaMao), avisos = table.concat(cont.avisos, " | ") })
+	elseif tag == "uiaudit" then
+		local s = script.Parent:FindFirstChild("QA_UiTurnoSrc")
+		if s then
+			local fn = loadstring
+			canal:FireServer("uiaudit", "sem loadstring no cliente")
+		end
 	end
 end)
 ]])
@@ -283,7 +325,9 @@ if tg and tg.Enabled then
 		end
 	end
 end
-if #zones == 0 and UIS.TouchEnabled then
+-- TouchGui present but no visible Jump/Thumbstick = the game disabled the character controls (ControlModule:Disable):
+-- nothing to overlap. The default corners are only a guess for when the TouchGui was not created yet.
+if #zones == 0 and UIS.TouchEnabled and not tg then
 	local s = math.min(vp.X, vp.Y)
 	table.insert(zones, { 0, vp.Y - s * 0.45, s * 0.45, s * 0.45, "thumbstick(default)" })
 	table.insert(zones, { vp.X - s * 0.3, vp.Y - s * 0.3, s * 0.3, s * 0.3, "jump(default)" })
@@ -510,7 +554,9 @@ if tg and tg.Enabled then
 		end
 	end
 end
-if #zones == 0 and UIS.TouchEnabled then
+-- TouchGui present but no visible Jump/Thumbstick = the game disabled the character controls (ControlModule:Disable):
+-- nothing to overlap. The default corners are only a guess for when the TouchGui was not created yet.
+if #zones == 0 and UIS.TouchEnabled and not tg then
 	local s = math.min(vp.X, vp.Y)
 	table.insert(zones, { 0, vp.Y - s * 0.45, s * 0.45, s * 0.45, "thumbstick(default)" })
 	table.insert(zones, { vp.X - s * 0.3, vp.Y - s * 0.3, s * 0.3, s * 0.3, "jump(default)" })

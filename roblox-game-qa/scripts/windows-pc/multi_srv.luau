@@ -5,7 +5,7 @@ local RS = game:GetService("ReplicatedStorage")
 local Http = game:GetService("HttpService")
 local LogService = game:GetService("LogService")
 local args = STS:GetTestArgs()
-local n = tonumber(string.match(tostring(args), "%d+")) or 2
+local n = tonumber(string.match(tostring(args), "^(%d+)")) or 2 -- args = "<n> <rotulo> seed<s>"
 local t0 = os.clock()
 local r = { args = tostring(args), passos = {}, cli = {}, logsServidor = {}, logsCliente = {}, ui = {} }
 local function passo(s) table.insert(r.passos, string.format("%.1f %s", os.clock() - t0, s)) end
@@ -80,7 +80,10 @@ end
 if not (coz and vig) then return fim("sem dupla Cozinheiro+Vigia: " .. Http:JSONEncode(papeis())) end
 -- red-team pelo cliente Vigia (nao e cozinheiro): nada pode mudar na cozinha
 local maoAntes = table.concat(Cozinha.mao(), ",")
-r.redteamVigia = pedir(vig, "redteam", nil, 15)
+r.seed = tonumber(string.match(tostring(args), "seed(%d+)")) or 0
+local errosAntes = #r.logsServidor
+r.redteamVigia = pedir(vig, "redteam", { seed = r.seed }, 25)
+r.errosServidorNoRedteam = #r.logsServidor - errosAntes
 task.wait(1)
 r.redteamVigiaMao = { antes = maoAntes, depois = table.concat(Cozinha.mao(), ","), papeis = papeis(), modo = Sessao.modo() }
 -- cozinheiro real: Caldo pelos remotes do cliente

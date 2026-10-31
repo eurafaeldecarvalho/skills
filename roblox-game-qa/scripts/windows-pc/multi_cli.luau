@@ -39,6 +39,19 @@ canal.OnClientEvent:Connect(function(tag, extra)
 			avisos = table.concat(cont.avisos, " | "), telas = telas(), cameraTipo = cam.CameraType.Name,
 			camPos = string.format("%.0f,%.0f,%.0f", cam.CFrame.Position.X, cam.CFrame.Position.Y, cam.CFrame.Position.Z),
 			viewport = string.format("%dx%d", cam.ViewportSize.X, cam.ViewportSize.Y),
+			toqueVisiveis = (function()
+				local tg = lp.PlayerGui:FindFirstChild("TouchGui")
+				if not tg then return "sem TouchGui" end
+				local v = {}
+				for _, x in tg:GetDescendants() do
+					if x:IsA("GuiObject") and x.Visible and (x.Name:find("Jump") or x.Name:find("Thumbstick")) then
+						local vis, a = true, x.Parent
+						while a and a ~= tg do if a:IsA("GuiObject") and not a.Visible then vis = false end a = a.Parent end
+						if vis then table.insert(v, x.Name) end
+					end
+				end
+				return (tg.Enabled and "on:" or "off:") .. table.concat(v, ",")
+			end)(),
 		})
 	elseif tag == "redteam" then
 		-- cliente hostil: tipos errados, papel alheio, spam
@@ -54,8 +67,27 @@ canal.OnClientEvent:Connect(function(tag, extra)
 		R.MaisUmaNoite:FireServer()
 		R.EnviarPing:FireServer(999, "todos")
 		R.EnviarPing:FireServer(nil, nil)
+		-- macaco com seed (seed nova a cada iteracao): remotes do jogo x argumentos hostis aleatorios
+		local disparos, falhasLocais = 0, 0
+		if typeof(extra) == "table" and extra.seed then
+			local rng = Random.new(extra.seed)
+			local alvos = {}
+			for _, x in R:GetChildren() do if x:IsA("RemoteEvent") then table.insert(alvos, x) end end
+			table.sort(alvos, function(a, b) return a.Name < b.Name end)
+			local pool = { 0, -1, 1, 2, 7, 1e9, -1e9, 0 / 0, math.huge, "", "Moenda", "Copos", "Fritadeira", "Servir", "Recusar", "Clique", "Inicio", "Fim", "Cozinheiro", "Vigia", "todos", string.rep("z", 3000), {}, { 1, 2, 3 }, { id = 1 }, true, false, Vector3.new(1e6, 0, 0), workspace, lp }
+			for _ = 1, 120 do
+				local alvo = alvos[rng:NextInteger(1, #alvos)]
+				local a = {}
+				local k = rng:NextInteger(0, 3)
+				for j = 1, k do a[j] = pool[rng:NextInteger(1, #pool)] end
+				local ok = pcall(function() alvo:FireServer(table.unpack(a, 1, k)) end)
+				disparos += 1
+				if not ok then falhasLocais += 1 end
+				if rng:NextNumber() < 0.2 then task.wait() end
+			end
+		end
 		task.wait(2)
-		canal:FireServer("redteam", { papelDepois = papel, modoDepois = modo, maoMsgsNovas = cont.mao - m0 })
+		canal:FireServer("redteam", { papelDepois = papel, modoDepois = modo, maoMsgsNovas = cont.mao - m0, seed = typeof(extra) == "table" and extra.seed, disparos = disparos, falhasLocais = falhasLocais })
 	elseif tag == "caldo" then
 		local m0 = cont.mao
 		R.AcaoCozinha:FireServer("Moenda", "Clique")

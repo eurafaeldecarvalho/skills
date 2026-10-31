@@ -57,7 +57,7 @@ Fluxo: no box, monte `pcpkg/qa/` (scripts da skill + sondas do jogo) → `tar` �
 
 ## Teste multiplayer (Server & Clients) via MCP — padrão mt_ins / multi_srv / multi_cli / mt_poll / mt_rem
 `StudioTestService:ExecuteMultiplayerTestAsync(n, args)` disparado do **Edit** funciona e abre servidor + n clientes.
-- `mt_ins.luau` (dm=Edit, `sub: {"__N__": "2", "__ARG__": "dois"}`): apaga sobras QA_*, insere `QA_Multi` (Script no
+- `mt_ins.luau` (dm=Edit, `sub: {"__N__": "2", "__ARG__": "2 dois seed4101"}` — args = `"<n> <rótulo> seed<s>"`; troque a seed a cada iteração para o macaco do red-team ser novo): apaga sobras QA_*, insere `QA_Multi` (Script no
   ServerScriptService = `multi_srv.luau`), `QA_MultiCli` (LocalScript = `multi_cli.luau`) e as sondas de UI, e dispara o
   teste em `task.spawn`, gravando o resultado em `workspace:GetAttribute("QA_MT")`.
 - `multi_srv.luau`: espera os n jogadores, orquestra os clientes por um RemoteEvent `QA_MultiCanal`
@@ -75,3 +75,8 @@ Fluxo: no box, monte `pcpkg/qa/` (scripts da skill + sondas do jogo) → `tar` �
 Foco no Studio de teste → screenshot → menu **Teste** (barra superior) → **Device Simulator** → escolha o aparelho
 no seletor do topo da viewport (ex.: iPhone XR). Depois rode `start_stop_play` + `ui_direct.luau`/`cli_perf.luau` com
 dm=Client (lote `b7_xr.json`): `input.touch` deve ser `true` e `targetFloorPx` 44. Continua sendo **emulador** (teto 3).
+
+### Lições da iteração 2 no PC (2026-10-30)
+- O Device Simulator ligado **persiste** entre sessões do Studio: os clientes do Server & Clients nascem em toque 801×413. Bom para auditar todos os papéis no celular (foi assim que apareceu um P2 de texto do Manual do Vigia), mas desligue de novo no fim (Teste → Device Simulator) e confira o viewport do solo no mouse.
+- `touch-zone` contra os cantos "default" é falso positivo quando o jogo chama `Controls:Disable()`: o TouchGui existe mas sem Jump/Thumbstick visíveis. O ui-audit agora só usa os cantos padrão sem TouchGui; o `multi_cli` reporta `toqueVisiveis` por cliente para confirmar.
+- O red-team do `multi_cli` agora inclui um macaco com seed (120 `FireServer` aleatórios em todos os RemoteEvents com argumentos hostis); `multi_srv` devolve `errosServidorNoRedteam`.

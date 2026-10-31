@@ -91,7 +91,9 @@ if tg and tg.Enabled then
 		end
 	end
 end
-if #zones == 0 and UIS.TouchEnabled then
+-- TouchGui present but no visible Jump/Thumbstick = the game disabled the character controls (ControlModule:Disable):
+-- nothing to overlap. The default corners are only a guess for when the TouchGui was not created yet.
+if #zones == 0 and UIS.TouchEnabled and not tg then
 	local s = math.min(vp.X, vp.Y)
 	table.insert(zones, { 0, vp.Y - s * 0.45, s * 0.45, s * 0.45, "thumbstick(default)" })
 	table.insert(zones, { vp.X - s * 0.3, vp.Y - s * 0.3, s * 0.3, s * 0.3, "jump(default)" })
