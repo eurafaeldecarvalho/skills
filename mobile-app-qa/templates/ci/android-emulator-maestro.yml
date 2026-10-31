@@ -17,7 +17,9 @@
 #   - `emulator -accel-check` only works AFTER the runner action installs the emulator, so it runs in-script.
 #   - Fresh AVDs on 2 vCPU often show "Pixel Launcher isn't responding" over the app -> every testID
 #     selector fails. Fixed by: ram-size 3072M, hide_error_dialogs=1, settle 20 s, dismiss_anr before each step.
-#   - actions/cache does NOT save the AVD when the job fails; first green run per API level warms it.
+#   - The AVD cache is saved right after AVD creation (cache/save step), so even a failing first run warms it,
+#     and a used AVD is never cached. Never cache post-run: a used API 30 AVD made later API 30 jobs die
+#     ~2-3 min into the emulator step with no logs. Bump the key suffix if a cached AVD goes bad.
 #   - Emulator locale is en-US: share sheets say "Sharing", not "Compartilhar"; use locale-tolerant regex.
 #   - Bottom-anchored CTAs are hidden behind the 3-button nav bar on API 30 (gesture pill on 34). If the app
 #     ignores safe-area insets, flows fail on API 30 only: that is a real app bug, not infra.
@@ -126,14 +128,17 @@ jobs:
           exit $FAIL
           SH
 
-      - name: AVD cache
-        uses: actions/cache@v5
+      # Restore only; the cache is saved right after AVD creation (clean snapshot), never after the test run.
+      # A post-run save (plain actions/cache) cached a used API 30 AVD; every later API 30 job that restored
+      # it died ~2-3 min into the emulator step with no logs (runner lost).
+      - name: AVD cache (restore)
+        uses: actions/cache/restore@v5
         id: avd-cache
         with:
           path: |
             ~/.android/avd/*
             ~/.android/adb*
-          key: avd-${{ matrix.api-level }}-${{ inputs.target }}-${{ inputs.profile }}-x86_64-3g
+          key: avd-${{ matrix.api-level }}-${{ inputs.target }}-${{ inputs.profile }}-x86_64-3g-clean
 
       - name: Create AVD snapshot (cache miss only)
         if: steps.avd-cache.outputs.cache-hit != 'true'
@@ -148,6 +153,15 @@ jobs:
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           disable-animations: false
           script: echo "AVD snapshot generated"
+
+      - name: AVD cache (save clean snapshot)
+        if: steps.avd-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v5
+        with:
+          path: |
+            ~/.android/avd/*
+            ~/.android/adb*
+          key: avd-${{ matrix.api-level }}-${{ inputs.target }}-${{ inputs.profile }}-x86_64-3g-clean
 
       - name: Run QA in emulator
         # Cap the step: emulator shutdown has been seen to hang ~27 min after tests finished.
