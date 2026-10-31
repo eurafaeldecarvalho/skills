@@ -11,7 +11,7 @@
 #   Hardware acceleration: GitHub-hosted ubuntu-latest exposes /dev/kvm; the udev step below makes it usable.
 #   Cost: private repos consume Actions minutes (Free plan: 2,000 min/month); public repos are free.
 #   Measured (2 vCPU / 8 GB runner, swiftshader GPU): KVM usable ("KVM (version 12) is installed and usable"),
-#   cold AVD boot 35-58 s, launch-to-ready 21-47 s, whole job 10-13 min per API level incl. full suite.
+#   cold AVD boot 35-58 s (8-31 s from cache), launch-to-ready 18-47 s, whole job 10-13 min per API level incl. full suite.
 #   Matrix jobs run in parallel but each bills its own minutes.
 # GOTCHAS learned the hard way:
 #   - `emulator -accel-check` only works AFTER the runner action installs the emulator, so it runs in-script.
@@ -23,6 +23,10 @@
 #   - Emulator locale is en-US: share sheets say "Sharing", not "Compartilhar"; use locale-tolerant regex.
 #   - Bottom-anchored CTAs are hidden behind the 3-button nav bar on API 30 (gesture pill on 34). If the app
 #     ignores safe-area insets, flows fail on API 30 only: that is a real app bug, not infra.
+#   - Still uninstall before install, in case an older cache carries app data.
+#   - Avoid Maestro `hideKeyboard` on Android: it sends BACK, which pops the screen when the IME is already
+#     closed. Use scrollUntilVisible + tapOn on the next target instead.
+#   - Share sheet title differs by API level/locale ("Share" on 30, "Sharing" on 34): match loosely.
 #   - Use scrollUntilVisible for anything below the fold (1080x2400 @420dpi pixel_6 profile).
 #   - The emulator-runner `script:` runs line by line; keep logic in one bash file (written below).
 #   No secrets needed. If flows need credentials, pass them as repo secrets -> env and `-e KEY=$KEY`.
@@ -112,6 +116,7 @@ jobs:
           adb shell settings put global hide_error_dialogs 1   # suppress system ANR/crash dialogs; crashes still hit logcat
           for i in $(seq 1 30); do [ "$(adb shell getprop sys.boot_completed | tr -d '\r')" = 1 ] && break; sleep 2; done
           sleep 20; dismiss_anr; adb logcat -c || true
+          adb uninstall "$APP_ID" >/dev/null 2>&1 || true   # cached AVD can carry app data from the last run
           step install adb install -r "$APK_PATH"
           step launch launch 15; shot first-screen
           step alive bash -c "adb shell pidof $APP_ID"
