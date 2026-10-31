@@ -24,6 +24,8 @@
 #   - Bottom-anchored CTAs are hidden behind the 3-button nav bar on API 30 (gesture pill on 34). If the app
 #     ignores safe-area insets, flows fail on API 30 only: that is a real app bug, not infra.
 #   - Still uninstall before install, in case an older cache carries app data.
+#   - Free runner disk first: with the AVD cache restored, the emulator can abort on low disk space ("FATAL ...
+#     not enough disk space to run avd") and the job only shows a boot timeout or a lost runner.
 #   - Avoid Maestro `hideKeyboard` on Android: it sends BACK, which pops the screen when the IME is already
 #     closed. Use scrollUntilVisible + tapOn on the next target instead.
 #   - Share sheet title differs by API level/locale ("Share" on 30, "Sharing" on 34): match loosely.
@@ -66,6 +68,16 @@ jobs:
       MAESTRO_DISABLE_UPDATE_CHECK: "1"
     steps:
       - uses: actions/checkout@v6
+
+      # Runner images ship with ~15 GB free; restoring the AVD cache takes ~9 GB, and the API 30 emulator then aborted
+      # with "FATAL | Your device does not have enough disk space to run avd" (boot timeout). Free unused toolchains.
+      - name: Free disk space
+        run: |
+          mkdir -p "$OUT"; df -h / | tee -a "$OUT/disk.txt"
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android/sdk/ndk /opt/ghc /usr/local/.ghcup /opt/hostedtoolcache/CodeQL \
+            /usr/local/share/boost /usr/share/swift /usr/local/share/powershell /usr/local/julia* /opt/az /usr/share/miniconda || true
+          sudo docker image prune --all --force >/dev/null 2>&1 || true
+          df -h / | tee -a "$OUT/disk.txt"
 
       - name: Enable KVM + record acceleration
         run: |
@@ -167,6 +179,9 @@ jobs:
             ~/.android/avd/*
             ~/.android/adb*
           key: avd-${{ matrix.api-level }}-${{ inputs.target }}-${{ inputs.profile }}-x86_64-3g-clean
+
+      - name: Disk before emulator
+        run: df -h / | tee -a "$OUT/disk.txt"
 
       - name: Run QA in emulator
         # Cap the step: emulator shutdown has been seen to hang ~27 min after tests finished.
