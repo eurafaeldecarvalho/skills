@@ -150,6 +150,8 @@ jobs:
           script: echo "AVD snapshot generated"
 
       - name: Run QA in emulator
+        # Cap the step: emulator shutdown has been seen to hang ~27 min after tests finished.
+        timeout-minutes: 20
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: ${{ matrix.api-level }}
